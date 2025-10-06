@@ -1,0 +1,326 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: waitlist_test
+          MYSQL_USER: test
+          MYSQL_PASSWORD: testpassword
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        cd frontend && npm ci
+
+    - name: Run linting
+      run: |
+        npm run lint
+        cd frontend && npm run lint
+
+    - name: Run type checking
+      run: |
+        npm run type-check
+        cd frontend && npm run type-check
+
+    - name: Run unit tests
+      env:
+        DATABASE_URL: mysql://test:testpassword@localhost:3306/waitlist_test
+        REDIS_URL: redis://localhost:6379
+        JWT_SECRET: test-jwt-secret
+        NODE_ENV: test
+      run: npm test -- --coverage
+
+    - name: Run integration tests
+      env:
+        DATABASE_URL: mysql://test:testpassword@localhost:3306/waitlist_test
+        REDIS_URL: redis://localhost:6379
+        JWT_SECRET: test-jwt-secret
+        NODE_ENV: test
+      run: npm run test:integration
+
+    - name: Run frontend tests
+      run: cd frontend && npm test
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+        flags: backend
+        name: backend-coverage
+
+    - name: Upload frontend coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./frontend/coverage/lcov.info
+        flags: frontend
+        name: frontend-coverage
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run security audit
+      run: npm audit --audit-level moderate
+
+    - name: Run security tests
+      run: npm run test:security
+
+    - name: Run SAST scan
+      uses: github/super-linter@v4
+      env:
+        DEFAULT_BRANCH: main
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VALIDATE_TYPESCRIPT_ES: true
+        VALIDATE_DOCKERFILE: true
+        VALIDATE_YAML: true
+
+  build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    if: github.event_name == 'push'
+    
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to staging
+      env:
+        DEPLOY_HOST: ${{ secrets.STAGING_HOST }}
+        DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        REDIS_URL: ${{ secrets.STAGING_REDIS_URL }}
+        JWT_SECRET: ${{ secrets.STAGING_JWT_SECRET }}
+        SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+        SENDGRID_FROM_EMAIL: ${{ secrets.SENDGRID_FROM_EMAIL }}
+      run: |
+        echo "$DEPLOY_KEY" > deploy_key
+        chmod 600 deploy_key
+        
+        # Copy deployment files
+        scp -i deploy_key -o StrictHostKeyChecking=no \
+          docker-compose.staging.yml $DEPLOY_USER@$DEPLOY_HOST:~/
+        
+        # Deploy application
+        ssh -i deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
+          export IMAGE_TAG=develop-${{ github.sha }}
+          export DATABASE_URL="${{ secrets.STAGING_DATABASE_URL }}"
+          export REDIS_URL="${{ secrets.STAGING_REDIS_URL }}"
+          export JWT_SECRET="${{ secrets.STAGING_JWT_SECRET }}"
+          export SENDGRID_API_KEY="${{ secrets.SENDGRID_API_KEY }}"
+          export SENDGRID_FROM_EMAIL="${{ secrets.SENDGRID_FROM_EMAIL }}"
+          
+          docker-compose -f docker-compose.staging.yml pull
+          docker-compose -f docker-compose.staging.yml up -d
+          
+          # Wait for health check
+          sleep 30
+          curl -f http://localhost:3000/health || exit 1
+        EOF
+
+    - name: Run smoke tests
+      env:
+        STAGING_URL: ${{ secrets.STAGING_URL }}
+      run: |
+        # Basic smoke tests
+        curl -f $STAGING_URL/health
+        curl -f $STAGING_URL/api/health
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to production
+      env:
+        DEPLOY_HOST: ${{ secrets.PRODUCTION_HOST }}
+        DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        REDIS_URL: ${{ secrets.PRODUCTION_REDIS_URL }}
+        JWT_SECRET: ${{ secrets.PRODUCTION_JWT_SECRET }}
+        SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+        SENDGRID_FROM_EMAIL: ${{ secrets.SENDGRID_FROM_EMAIL }}
+      run: |
+        echo "$DEPLOY_KEY" > deploy_key
+        chmod 600 deploy_key
+        
+        # Copy deployment files
+        scp -i deploy_key -o StrictHostKeyChecking=no \
+          docker-compose.prod.yml scripts/deploy.sh $DEPLOY_USER@$DEPLOY_HOST:~/
+        
+        # Deploy with blue-green strategy
+        ssh -i deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'EOF'
+          export IMAGE_TAG=main-${{ github.sha }}
+          export DATABASE_URL="${{ secrets.PRODUCTION_DATABASE_URL }}"
+          export REDIS_URL="${{ secrets.PRODUCTION_REDIS_URL }}"
+          export JWT_SECRET="${{ secrets.PRODUCTION_JWT_SECRET }}"
+          export SENDGRID_API_KEY="${{ secrets.SENDGRID_API_KEY }}"
+          export SENDGRID_FROM_EMAIL="${{ secrets.SENDGRID_FROM_EMAIL }}"
+          
+          chmod +x deploy.sh
+          ./deploy.sh deploy production main-${{ github.sha }}
+        EOF
+
+    - name: Run production smoke tests
+      env:
+        PRODUCTION_URL: ${{ secrets.PRODUCTION_URL }}
+      run: |
+        # Comprehensive smoke tests
+        curl -f $PRODUCTION_URL/health
+        curl -f $PRODUCTION_URL/api/health
+        
+        # Test critical endpoints
+        curl -f $PRODUCTION_URL/api/waitlist -X GET -H "Authorization: Bearer ${{ secrets.TEST_TOKEN }}"
+
+  load-test:
+    name: Load Testing
+    runs-on: ubuntu-latest
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run load tests
+      env:
+        STAGING_URL: ${{ secrets.STAGING_URL }}
+        TEST_TOKEN: ${{ secrets.STAGING_TEST_TOKEN }}
+      run: npm run test:load
+
+    - name: Upload load test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: load-test-results
+        path: load-test-results.json
+
+  notify:
+    name: Notify Team
+    runs-on: ubuntu-latest
+    needs: [deploy-production]
+    if: always()
+    
+    steps:
+    - name: Notify Slack
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#deployments'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        fields: repo,message,commit,author,action,eventName,ref,workflow
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
