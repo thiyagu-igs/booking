@@ -6,8 +6,8 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
-import Card from '../components/Card'
-import LoadingSpinner from '../components/LoadingSpinner'
+import { Card } from '../components/Card'
+import { LoadingSpinner } from '../components/LoadingSpinner'
 import Button from '../components/Button'
 import { api } from '../services/api'
 import { format } from 'date-fns'

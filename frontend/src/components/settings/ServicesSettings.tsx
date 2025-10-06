@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import Button from '../Button'
-import LoadingSpinner from '../LoadingSpinner'
+import { LoadingSpinner } from '../LoadingSpinner'
 import { api } from '../../services/api'
 
 interface Service {
@@ -37,7 +37,15 @@ export default function ServicesSettings() {
   const loadServices = async () => {
     try {
       const response = await api.get('/services')
-      setServices(response.data)
+      // Transform the API response to match the expected format
+      const transformedServices = response.data.data?.map((service: any) => ({
+        id: service.id,
+        name: service.name,
+        durationMinutes: service.duration_minutes,
+        price: parseFloat(service.price),
+        active: Boolean(service.active)
+      })) || []
+      setServices(transformedServices)
     } catch (error) {
       console.error('Failed to load services:', error)
     } finally {
@@ -77,10 +85,17 @@ export default function ServicesSettings() {
   const saveService = async () => {
     setSaving(true)
     try {
+      // Transform the form data to match the API format
+      const apiData = {
+        name: formData.name,
+        duration_minutes: formData.durationMinutes,
+        price: formData.price
+      }
+      
       if (editingService) {
-        await api.put(`/services/${editingService.id}`, formData)
+        await api.put(`/services/${editingService.id}`, apiData)
       } else {
-        await api.post('/services', formData)
+        await api.post('/services', apiData)
       }
       closeForm()
       loadServices()
@@ -93,10 +108,14 @@ export default function ServicesSettings() {
 
   const toggleServiceStatus = async (service: Service) => {
     try {
-      await api.put(`/services/${service.id}`, {
-        ...service,
+      // Transform the service data to match the API format
+      const apiData = {
+        name: service.name,
+        duration_minutes: service.durationMinutes,
+        price: service.price,
         active: !service.active
-      })
+      }
+      await api.put(`/services/${service.id}`, apiData)
       loadServices()
     } catch (error) {
       console.error('Failed to update service status:', error)

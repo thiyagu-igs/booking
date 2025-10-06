@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { api } from '../services/api'
+import { TenantService } from '../services/tenant'
 
 interface User {
   id: string
@@ -11,7 +12,7 @@ interface User {
 interface AuthContextType {
   user: User | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string, tenantId: string) => Promise<void>
   logout: () => void
 }
 
@@ -28,7 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Verify token and get user info
       api.get('/auth/me')
         .then(response => {
-          setUser(response.data.user)
+          setUser(response.data.data)
         })
         .catch(() => {
           localStorage.removeItem('token')
@@ -42,17 +43,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const login = async (email: string, password: string) => {
-    const response = await api.post('/auth/login', { email, password })
-    const { token, user: userData } = response.data
-    
-    localStorage.setItem('token', token)
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-    setUser(userData)
+  const login = async (email: string, password: string, tenantId: string) => {
+    // Validate tenant ID format
+    if (!TenantService.isValidTenantId(tenantId)) {
+      throw new Error('Invalid tenant ID format. Please provide a valid UUID.')
+    }
+
+    try {
+      const response = await api.post('/auth/login', { email, password, tenantId })
+      
+      // Check if response has the expected structure
+      if (!response.data || !response.data.data) {
+        throw new Error('Invalid response format from server')
+      }
+      
+      const { token, user: userData } = response.data.data
+      
+      if (!token || !userData) {
+        throw new Error('Missing authentication data in response')
+      }
+      
+      // Store tenant selection for future use
+      TenantService.setSelectedTenant(tenantId)
+      
+      localStorage.setItem('token', token)
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      setUser(userData)
+      
+      console.log('Login successful, user set:', userData)
+    } catch (error: any) {
+      console.error('Login failed in AuthContext:', error)
+      // Don't store tenant on failed login
+      // Re-throw the error to be handled by the component
+      throw error
+    }
   }
 
   const logout = () => {
     localStorage.removeItem('token')
+    TenantService.clearSelectedTenant()
     delete api.defaults.headers.common['Authorization']
     setUser(null)
   }

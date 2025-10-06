@@ -6,9 +6,9 @@ import {
   ClockIcon,
   ExclamationTriangleIcon 
 } from '@heroicons/react/24/solid'
-import Card from '../components/Card'
+import { Card } from '../components/Card'
 import Button from '../components/Button'
-import LoadingSpinner from '../components/LoadingSpinner'
+import { LoadingSpinner } from '../components/LoadingSpinner'
 import { api } from '../services/api'
 import { format } from 'date-fns'
 

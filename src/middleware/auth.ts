@@ -208,6 +208,7 @@ export const authMiddleware = new AuthMiddleware();
 
 // Export individual middleware functions for convenience
 export const authenticate = authMiddleware.authenticate;
+export const authenticateToken = authMiddleware.authenticate; // Alias for backward compatibility
 export const requireRole = authMiddleware.requireRole;
 export const requireAdmin = authMiddleware.requireAdmin;
 export const requireManager = authMiddleware.requireManager;

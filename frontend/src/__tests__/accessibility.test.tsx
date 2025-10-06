@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { ThemeProvider } from '../contexts/ThemeContext'
 import Button from '../components/Button'
-import Card from '../components/Card'
-import LoadingSpinner from '../components/LoadingSpinner'
+import { Card } from '../components/Card'
+import { LoadingSpinner } from '../components/LoadingSpinner'
 import LoginPage from '../pages/LoginPage'
 
 // Mock the AuthContext for LoginPage

@@ -17,7 +17,7 @@ import { LoadingSpinner } from './LoadingSpinner';
 import { analyticsService, DailyAnalytics, AnalyticsMetrics } from '../services/analytics';
 import {
   ChartBarIcon,
-  TrendingUpIcon,
+  ArrowTrendingUpIcon,
   ClockIcon,
   CurrencyDollarIcon,
   CalendarDaysIcon,
@@ -263,7 +263,7 @@ export const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({
           <Card>
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <TrendingUpIcon className="h-8 w-8 text-blue-600" />
+                <ArrowTrendingUpIcon className="h-8 w-8 text-blue-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-500 dark:text-gray-400">

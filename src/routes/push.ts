@@ -2,16 +2,20 @@ import express from 'express';
 import { z } from 'zod';
 import webpush from 'web-push';
 import { validateRequest } from '../middleware/validation';
-import { authenticateToken } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 import { logger } from '../config/logger';
 
 const router = express.Router();
 
 // Configure web-push with VAPID keys
+const vapidEmail = process.env.VAPID_EMAIL || 'admin@waitlist.com';
+const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || 'TZkI9PmdkJpikcMwRiL3OsZfC_jK9sIg9Igd3K2UjObg3TzLxC9y49f3S8vU4jYre8avyNTISWVeU5YDh4HPb-w';
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || 'H1_bcXi84HW2idE5Jsd1_pGgGJeoWlAY_QWGzZFX5wU';
+
 webpush.setVapidDetails(
-  'mailto:' + (process.env.VAPID_EMAIL || 'admin@waitlist.com'),
-  process.env.VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa40HI80NM9f8HnKJuOmqmkFWJ3QJYdPiQfwdNQFUYgGQ1-0VlOFKmOdmGJRWM',
-  process.env.VAPID_PRIVATE_KEY || 'your-private-key-here'
+  'mailto:' + vapidEmail,
+  vapidPublicKey,
+  vapidPrivateKey
 );
 
 const subscribeSchema = z.object({
@@ -37,12 +41,12 @@ const sendNotificationSchema = z.object({
 // Get VAPID public key
 router.get('/vapid-public-key', (req, res) => {
   res.json({
-    publicKey: process.env.VAPID_PUBLIC_KEY || 'BEl62iUYgUivxIkv69yViEuiBIa40HI80NM9f8HnKJuOmqmkFWJ3QJYdPiQfwdNQFUYgGQ1-0VlOFKmOdmGJRWM'
+    publicKey: vapidPublicKey
   });
 });
 
 // Subscribe to push notifications
-router.post('/subscribe', authenticateToken, validateRequest(subscribeSchema), async (req, res) => {
+router.post('/subscribe', authenticate, validateRequest(subscribeSchema), async (req, res) => {
   try {
     const { subscription } = req.body;
     const { user_id, tenant_id } = req.user!;
@@ -71,7 +75,7 @@ router.post('/subscribe', authenticateToken, validateRequest(subscribeSchema), a
 });
 
 // Unsubscribe from push notifications
-router.post('/unsubscribe', authenticateToken, validateRequest(subscribeSchema), async (req, res) => {
+router.post('/unsubscribe', authenticate, validateRequest(subscribeSchema), async (req, res) => {
   try {
     const { subscription } = req.body;
     const { user_id } = req.user!;
@@ -94,7 +98,7 @@ router.post('/unsubscribe', authenticateToken, validateRequest(subscribeSchema),
 });
 
 // Send push notification to user
-router.post('/send/:userId', authenticateToken, validateRequest(sendNotificationSchema), async (req, res) => {
+router.post('/send/:userId', authenticate, validateRequest(sendNotificationSchema), async (req, res) => {
   try {
     const { userId } = req.params;
     const { title, body, data, actions } = req.body;
@@ -169,7 +173,7 @@ router.post('/send/:userId', authenticateToken, validateRequest(sendNotification
 });
 
 // Send push notification to all users in tenant
-router.post('/broadcast', authenticateToken, validateRequest(sendNotificationSchema), async (req, res) => {
+router.post('/broadcast', authenticate, validateRequest(sendNotificationSchema), async (req, res) => {
   try {
     const { title, body, data, actions } = req.body;
     const { tenant_id } = req.user!;

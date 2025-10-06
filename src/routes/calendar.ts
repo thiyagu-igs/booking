@@ -4,12 +4,12 @@ import { StaffRepository } from '../repositories/StaffRepository';
 import { SlotRepository } from '../repositories/SlotRepository';
 import { ServiceRepository } from '../repositories/ServiceRepository';
 import { logger } from '../config/logger';
-import { authenticateToken } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 
 // Apply authentication middleware to all routes
-router.use(authenticateToken);
+router.use(authenticate);
 
 /**
  * GET /api/calendar/auth/:staffId

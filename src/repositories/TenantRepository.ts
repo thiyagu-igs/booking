@@ -5,6 +5,29 @@ export class TenantRepository extends BaseRepository<Tenant> {
   protected tableName = 'tenants';
 
   /**
+   * Override findAll to not filter by tenant_id since tenants table is the root
+   */
+  async findAll(conditions: Partial<Tenant> = {}): Promise<Tenant[]> {
+    return this.db
+      .select('*')
+      .from(this.tableName)
+      .where(conditions);
+  }
+
+  /**
+   * Override findById to not filter by tenant_id
+   */
+  async findById(id: string): Promise<Tenant | null> {
+    const result = await this.db
+      .select('*')
+      .from(this.tableName)
+      .where({ id })
+      .first();
+    
+    return result || null;
+  }
+
+  /**
    * Find tenant by name
    */
   async findByName(name: string): Promise<Tenant | null> {

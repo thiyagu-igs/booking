@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import LoadingSpinner from './LoadingSpinner'
+import { LoadingSpinner } from './LoadingSpinner'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger'

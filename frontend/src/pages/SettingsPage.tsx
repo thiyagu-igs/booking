@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Tab } from '@headlessui/react'
 import { clsx } from 'clsx'
-import Card from '../components/Card'
+import { Card } from '../components/Card'
 import BusinessHoursSettings from '../components/settings/BusinessHoursSettings'
 import ServicesSettings from '../components/settings/ServicesSettings'
 import StaffSettings from '../components/settings/StaffSettings'

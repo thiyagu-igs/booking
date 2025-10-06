@@ -14,10 +14,10 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ className = ''
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    if (user?.tenant_id) {
+    if (user?.tenantId) {
       // Generate URL for customer waitlist signup
       const baseUrl = window.location.origin;
-      const waitlistUrl = `${baseUrl}/customer/waitlist?tenant=${user.tenant_id}`;
+      const waitlistUrl = `${baseUrl}/customer/waitlist?tenant=${user.tenantId}`;
       setQrValue(waitlistUrl);
     }
   }, [user]);
@@ -81,7 +81,6 @@ export const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ className = ''
             value={qrValue}
             size={200}
             level="M"
-            includeMargin={true}
           />
         </div>
 

@@ -1,24 +1,71 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { TenantService } from '../services/tenant'
+import { setLoginPageStatus } from '../services/api'
 import Button from '../components/Button'
-import Card from '../components/Card'
+import { Card } from '../components/Card'
+import TenantSelector from '../components/TenantSelector'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [tenantId, setTenantId] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [tenantError, setTenantError] = useState('')
   const { login } = useAuth()
+
+  useEffect(() => {
+    // Set login page status to prevent redirect loops
+    setLoginPageStatus(true)
+    
+    // Try to auto-detect tenant from context
+    const detectedTenant = TenantService.getTenantFromContext()
+    if (detectedTenant) {
+      setTenantId(detectedTenant)
+    }
+
+    // Cleanup function to reset login page status
+    return () => {
+      setLoginPageStatus(false)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
+    setTenantError('')
+
+    // Validate tenant ID
+    if (!tenantId.trim()) {
+      setTenantError('Tenant ID is required')
+      setLoading(false)
+      return
+    }
+
+    if (!TenantService.isValidTenantId(tenantId)) {
+      setTenantError('Invalid tenant ID format. Please provide a valid UUID.')
+      setLoading(false)
+      return
+    }
 
     try {
-      await login(email, password)
+      await login(email, password, tenantId)
+      // Login successful - user state will be updated in AuthContext
+      console.log('Login successful')
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed')
+      console.error('Login error:', err)
+      const message = err.response?.data?.message || err.message || 'Login failed'
+      
+      // Check for specific error types
+      if (message.includes('tenant') || message.includes('Tenant')) {
+        setTenantError(message)
+      } else if (err.response?.status === 401) {
+        setError('Invalid email or password')
+      } else {
+        setError(message)
+      }
     } finally {
       setLoading(false)
     }
@@ -42,6 +89,12 @@ export default function LoginPage() {
                 <div className="text-sm text-red-700 dark:text-red-200">{error}</div>
               </div>
             )}
+            <TenantSelector
+              value={tenantId}
+              onChange={setTenantId}
+              error={tenantError}
+            />
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Email address

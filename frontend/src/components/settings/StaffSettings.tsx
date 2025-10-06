@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline'
 import Button from '../Button'
-import LoadingSpinner from '../LoadingSpinner'
+import { LoadingSpinner } from '../LoadingSpinner'
 import { api } from '../../services/api'
 
 interface Staff {
@@ -34,7 +34,14 @@ export default function StaffSettings() {
   const loadStaff = async () => {
     try {
       const response = await api.get('/staff')
-      setStaff(response.data)
+      // Transform the API response to match the expected format
+      const transformedStaff = response.data.data?.map((member: any) => ({
+        id: member.id,
+        name: member.name,
+        role: member.role,
+        active: Boolean(member.active)
+      })) || []
+      setStaff(transformedStaff)
     } catch (error) {
       console.error('Failed to load staff:', error)
     } finally {
@@ -87,10 +94,12 @@ export default function StaffSettings() {
 
   const toggleStaffStatus = async (staffMember: Staff) => {
     try {
-      await api.put(`/staff/${staffMember.id}`, {
-        ...staffMember,
+      const apiData = {
+        name: staffMember.name,
+        role: staffMember.role,
         active: !staffMember.active
-      })
+      }
+      await api.put(`/staff/${staffMember.id}`, apiData)
       loadStaff()
     } catch (error) {
       console.error('Failed to update staff status:', error)

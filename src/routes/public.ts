@@ -33,6 +33,31 @@ const verifyOTPSchema = z.object({
   otp_code: z.string().length(6),
 });
 
+// Get available tenants for auth screen
+router.get('/tenants', async (req, res) => {
+  try {
+    const tenantRepo = new TenantRepository('system'); // Use system context for public access
+    const tenants = await tenantRepo.findAll();
+    
+    // Return only public tenant information
+    const publicTenants = tenants.map(tenant => ({
+      id: tenant.id,
+      name: tenant.name,
+      timezone: tenant.timezone
+    }));
+    
+    res.json({
+      success: true,
+      data: publicTenants
+    });
+  } catch (error) {
+    logger.error('Error fetching tenants:', error);
+    res.status(500).json({
+      error: { message: 'Internal server error' }
+    });
+  }
+});
+
 // Get business information for customer-facing page
 router.get('/business/:tenantId', async (req, res) => {
   try {

@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from './contexts/AuthContext'
 import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
@@ -9,19 +9,20 @@ import MessageLogPage from './pages/MessageLogPage'
 import { AnalyticsPage } from './pages/AnalyticsPage'
 import { CustomerWaitlistPage } from './pages/CustomerWaitlistPage'
 import { MobileStaffApp } from './components/MobileStaffApp'
-import LoadingSpinner from './components/LoadingSpinner'
+import { LoadingSpinner } from './components/LoadingSpinner'
 import { useEffect } from 'react'
 import { pushNotificationService } from './services/pushNotifications'
 
 function App() {
   const { user, loading } = useAuth()
+  const location = useLocation()
 
   useEffect(() => {
     // Initialize PWA features
     const initializePWA = async () => {
       // Initialize push notifications
       await pushNotificationService.initialize()
-      
+
       // Request notification permission for authenticated users
       if (user) {
         const permission = await pushNotificationService.requestPermission()
@@ -43,7 +44,7 @@ function App() {
   }
 
   // Public routes (no authentication required)
-  if (window.location.pathname.startsWith('/customer/')) {
+  if (location.pathname.startsWith('/customer/')) {
     return (
       <Routes>
         <Route path="/customer/waitlist" element={<CustomerWaitlistPage />} />
@@ -53,7 +54,7 @@ function App() {
   }
 
   // Mobile staff app route
-  if (window.location.pathname === '/mobile' && user) {
+  if (location.pathname === '/mobile' && user) {
     return <MobileStaffApp />
   }
 

@@ -52,3 +52,6 @@ export const validateAdminAccess = (req: Request, res: Response, next: NextFunct
     });
   }
 };
+
+// Alias for backward compatibility
+export const validateTenant = validateTenantAccess;

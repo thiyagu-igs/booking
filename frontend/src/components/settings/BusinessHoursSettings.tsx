@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Button from '../Button'
-import LoadingSpinner from '../LoadingSpinner'
+import { LoadingSpinner } from '../LoadingSpinner'
 import { api } from '../../services/api'
 
 interface BusinessHours {
@@ -43,7 +43,7 @@ export default function BusinessHoursSettings() {
   const loadBusinessHours = async () => {
     try {
       const response = await api.get('/settings/business-hours')
-      setHours(response.data)
+      setHours(response.data.data || {})
     } catch (error) {
       console.error('Failed to load business hours:', error)
       // Set default hours if none exist

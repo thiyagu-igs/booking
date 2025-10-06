@@ -26,6 +26,7 @@ export class MonitoringService {
   private alerts: SecurityAlert[] = [];
   private readonly MAX_METRICS_HISTORY = 1000;
   private readonly MAX_ALERTS_HISTORY = 500;
+  private redisInitialized: boolean = false;
 
   constructor() {
     this.initializeRedis();
@@ -36,16 +37,39 @@ export class MonitoringService {
       if (process.env.MOCK_REDIS === 'true') {
         console.log('🔧 MonitoringService using Mock Redis');
         this.redisClient = null; // Skip Redis for monitoring in mock mode
+        this.redisInitialized = true;
         return;
       }
       
       this.redisClient = createClient({
         url: process.env.REDIS_URL || 'redis://localhost:6379'
       });
+
+      this.redisClient.on('error', (err: any) => {
+        console.error('Redis Client Error:', err);
+        this.redisClient = null; // Reset client on error
+        this.redisInitialized = true; // Mark as initialized even on error
+      });
+
+      this.redisClient.on('connect', () => {
+        console.log('✅ MonitoringService connected to Redis');
+      });
+
       await this.redisClient.connect();
+      this.redisInitialized = true;
     } catch (error) {
       console.error('Failed to connect to Redis for monitoring:', error);
       this.redisClient = null; // Fallback to in-memory only
+      this.redisInitialized = true; // Mark as initialized even on error
+    }
+  }
+
+  /**
+   * Ensure Redis is initialized before operations
+   */
+  private async ensureRedisInitialized(): Promise<void> {
+    if (!this.redisInitialized) {
+      await this.initializeRedis();
     }
   }
 
@@ -53,6 +77,8 @@ export class MonitoringService {
    * Collect system metrics
    */
   async collectMetrics(): Promise<SystemMetrics> {
+    // Ensure Redis is initialized
+    await this.ensureRedisInitialized();
     const metrics: SystemMetrics = {
       timestamp: new Date(),
       cpuUsage: await this.getCPUUsage(),
@@ -70,12 +96,21 @@ export class MonitoringService {
     }
 
     // Store in Redis for persistence
-    if (this.redisClient) {
+    if (this.redisInitialized && this.redisClient && typeof this.redisClient.lpush === 'function') {
       try {
-        await this.redisClient.lpush('system_metrics', JSON.stringify(metrics));
-        await this.redisClient.ltrim('system_metrics', 0, this.MAX_METRICS_HISTORY - 1);
+        // Check if client is connected
+        if (this.redisClient.isOpen || this.redisClient.isReady) {
+          await this.redisClient.lpush('system_metrics', JSON.stringify(metrics));
+          await this.redisClient.ltrim('system_metrics', 0, this.MAX_METRICS_HISTORY - 1);
+        }
       } catch (error) {
         console.error('Failed to store metrics in Redis:', error);
+        // Reset client if connection is broken
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage?.includes('connection') || errorMessage?.includes('ECONNREFUSED')) {
+          this.redisClient = null;
+          console.log('Redis connection lost, falling back to in-memory storage');
+        }
       }
     }
 
@@ -100,14 +135,16 @@ export class MonitoringService {
       this.alerts.shift();
     }
 
-    // Log to audit system
-    await AuditService.logSecurity(
-      alert.tenantId,
-      alert.type,
-      {} as any, // No request context for system alerts
-      alert.severity,
-      alert.details
-    );
+    // Log to audit system (only log medium, high, critical to security audit)
+    if (alert.severity !== 'low') {
+      await AuditService.logSecurity(
+        alert.tenantId,
+        alert.type,
+        {} as any, // No request context for system alerts
+        alert.severity as 'medium' | 'high' | 'critical',
+        alert.details
+      );
+    }
 
     // Send notifications for critical alerts
     if (alert.severity === 'critical') {
@@ -231,7 +268,7 @@ export class MonitoringService {
     try {
       // Get database connection count
       const result = await db.raw('SHOW STATUS LIKE "Threads_connected"');
-      return parseInt(result[0][0]?.Value || '0');
+      return parseInt(String(result[0][0]?.Value || '0'));
     } catch {
       return 0;
     }
@@ -258,8 +295,8 @@ export class MonitoringService {
         .where('success', false)
         .count('* as count');
 
-      const total = parseInt(totalRequests[0]?.count || '0');
-      const errors = parseInt(errorRequests[0]?.count || '0');
+      const total = parseInt(String(totalRequests[0]?.count || '0'));
+      const errors = parseInt(String(errorRequests[0]?.count || '0'));
 
       return total > 0 ? (errors / total) * 100 : 0;
     } catch {

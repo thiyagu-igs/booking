@@ -1,14 +1,14 @@
 import express from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import { WhatsAppTemplateService } from '../services/WhatsAppTemplateService';
-import { authMiddleware } from '../middleware/auth';
+import { authenticate } from '../middleware/auth';
 import { WhatsAppTemplateStatus } from '../models';
 import { logger } from '../config/logger';
 
 const router = express.Router();
 
 // Apply authentication middleware to all routes
-router.use(authMiddleware);
+router.use(authenticate);
 
 /**
  * Get all WhatsApp templates for tenant

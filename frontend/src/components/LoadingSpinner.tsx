@@ -5,7 +5,7 @@ interface LoadingSpinnerProps {
   className?: string
 }
 
-export default function LoadingSpinner({ size = 'md', className }: LoadingSpinnerProps) {
+export function LoadingSpinner({ size = 'md', className }: LoadingSpinnerProps) {
   return (
     <div
       className={clsx(

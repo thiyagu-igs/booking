@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Button from '../Button'
-import LoadingSpinner from '../LoadingSpinner'
+import { LoadingSpinner } from '../LoadingSpinner'
 import { api } from '../../services/api'
 
 interface EmailTemplate {
@@ -32,95 +32,95 @@ const defaultTemplates: Record<string, EmailTemplate> = {
   notification: {
     type: 'notification',
     subject: 'Slot Available - {{serviceName}} with {{staffName}}',
-    htmlContent: `
-<h2>Great news! A slot is now available</h2>
-<p>Hi {{customerName}},</p>
-<p>We have a <strong>{{serviceName}}</strong> appointment available with {{staffName}} on {{date}} at {{time}}.</p>
-<p>This slot is being held for you for the next 10 minutes.</p>
-<div style="margin: 20px 0;">
-  <a href="{{confirmLink}}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Confirm Booking</a>
-  <a href="{{declineLink}}" style="background-color: #6b7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-left: 10px;">Decline</a>
-</div>
-<p>If you don't respond within 10 minutes, this slot will be offered to the next person on the waitlist.</p>
-<p>Thank you!</p>
-    `.trim(),
-    textContent: `
-Hi {{customerName}},
-
-Great news! We have a {{serviceName}} appointment available with {{staffName}} on {{date}} at {{time}}.
-
-This slot is being held for you for the next 10 minutes.
-
-To confirm: {{confirmLink}}
-To decline: {{declineLink}}
-
-If you don't respond within 10 minutes, this slot will be offered to the next person on the waitlist.
-
-Thank you!
-    `.trim()
+    htmlContent: [
+      '<h2>Great news! A slot is now available</h2>',
+      '<p>Hi {{customerName}},</p>',
+      '<p>We have a <strong>{{serviceName}}</strong> appointment available with {{staffName}} on {{date}} at {{time}}.</p>',
+      '<p>This slot is being held for you for the next 10 minutes.</p>',
+      '<div style="margin: 20px 0;">',
+      '  <a href="{{confirmLink}}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Confirm Booking</a>',
+      '  <a href="{{declineLink}}" style="background-color: #6b7280; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin-left: 10px;">Decline</a>',
+      '</div>',
+      '<p>If you don\'t respond within 10 minutes, this slot will be offered to the next person on the waitlist.</p>',
+      '<p>Thank you!</p>'
+    ].join('\n'),
+    textContent: [
+      'Hi {{customerName}},',
+      '',
+      'Great news! We have a {{serviceName}} appointment available with {{staffName}} on {{date}} at {{time}}.',
+      '',
+      'This slot is being held for you for the next 10 minutes.',
+      '',
+      'To confirm: {{confirmLink}}',
+      'To decline: {{declineLink}}',
+      '',
+      'If you don\'t respond within 10 minutes, this slot will be offered to the next person on the waitlist.',
+      '',
+      'Thank you!'
+    ].join('\n')
   },
   confirmation: {
     type: 'confirmation',
     subject: 'Booking Confirmed - {{serviceName}} on {{date}}',
-    htmlContent: `
-<h2>Your booking is confirmed!</h2>
-<p>Hi {{customerName}},</p>
-<p>Your <strong>{{serviceName}}</strong> appointment with {{staffName}} is confirmed for:</p>
-<div style="background-color: #f3f4f6; padding: 16px; border-radius: 6px; margin: 16px 0;">
-  <p><strong>Date:</strong> {{date}}</p>
-  <p><strong>Time:</strong> {{time}}</p>
-  <p><strong>Service:</strong> {{serviceName}}</p>
-  <p><strong>Staff:</strong> {{staffName}}</p>
-  <p><strong>Duration:</strong> {{duration}} minutes</p>
-  <p><strong>Price:</strong> ${{price}}</p>
-</div>
-<p>We look forward to seeing you!</p>
-    `.trim(),
-    textContent: `
-Hi {{customerName}},
-
-Your {{serviceName}} appointment with {{staffName}} is confirmed for:
-
-Date: {{date}}
-Time: {{time}}
-Service: {{serviceName}}
-Staff: {{staffName}}
-Duration: {{duration}} minutes
-Price: ${{price}}
-
-We look forward to seeing you!
-    `.trim()
+    htmlContent: [
+      '<h2>Your booking is confirmed!</h2>',
+      '<p>Hi {{customerName}},</p>',
+      '<p>Your <strong>{{serviceName}}</strong> appointment with {{staffName}} is confirmed for:</p>',
+      '<div style="background-color: #f3f4f6; padding: 16px; border-radius: 6px; margin: 16px 0;">',
+      '  <p><strong>Date:</strong> {{date}}</p>',
+      '  <p><strong>Time:</strong> {{time}}</p>',
+      '  <p><strong>Service:</strong> {{serviceName}}</p>',
+      '  <p><strong>Staff:</strong> {{staffName}}</p>',
+      '  <p><strong>Duration:</strong> {{duration}} minutes</p>',
+      '  <p><strong>Price:</strong> ${{price}}</p>',
+      '</div>',
+      '<p>We look forward to seeing you!</p>'
+    ].join('\n'),
+    textContent: [
+      'Hi {{customerName}},',
+      '',
+      'Your {{serviceName}} appointment with {{staffName}} is confirmed for:',
+      '',
+      'Date: {{date}}',
+      'Time: {{time}}',
+      'Service: {{serviceName}}',
+      'Staff: {{staffName}}',
+      'Duration: {{duration}} minutes',
+      'Price: ${{price}}',
+      '',
+      'We look forward to seeing you!'
+    ].join('\n')
   },
   reminder: {
     type: 'reminder',
     subject: 'Reminder - {{serviceName}} appointment tomorrow',
-    htmlContent: `
-<h2>Appointment Reminder</h2>
-<p>Hi {{customerName}},</p>
-<p>This is a friendly reminder about your upcoming appointment:</p>
-<div style="background-color: #f3f4f6; padding: 16px; border-radius: 6px; margin: 16px 0;">
-  <p><strong>Service:</strong> {{serviceName}}</p>
-  <p><strong>Staff:</strong> {{staffName}}</p>
-  <p><strong>Date:</strong> {{date}}</p>
-  <p><strong>Time:</strong> {{time}}</p>
-</div>
-<p>Please arrive 5 minutes early. If you need to reschedule or cancel, please contact us as soon as possible.</p>
-<p>We look forward to seeing you!</p>
-    `.trim(),
-    textContent: `
-Hi {{customerName}},
-
-This is a friendly reminder about your upcoming appointment:
-
-Service: {{serviceName}}
-Staff: {{staffName}}
-Date: {{date}}
-Time: {{time}}
-
-Please arrive 5 minutes early. If you need to reschedule or cancel, please contact us as soon as possible.
-
-We look forward to seeing you!
-    `.trim()
+    htmlContent: [
+      '<h2>Appointment Reminder</h2>',
+      '<p>Hi {{customerName}},</p>',
+      '<p>This is a friendly reminder about your upcoming appointment:</p>',
+      '<div style="background-color: #f3f4f6; padding: 16px; border-radius: 6px; margin: 16px 0;">',
+      '  <p><strong>Service:</strong> {{serviceName}}</p>',
+      '  <p><strong>Staff:</strong> {{staffName}}</p>',
+      '  <p><strong>Date:</strong> {{date}}</p>',
+      '  <p><strong>Time:</strong> {{time}}</p>',
+      '</div>',
+      '<p>Please arrive 5 minutes early. If you need to reschedule or cancel, please contact us as soon as possible.</p>',
+      '<p>We look forward to seeing you!</p>'
+    ].join('\n'),
+    textContent: [
+      'Hi {{customerName}},',
+      '',
+      'This is a friendly reminder about your upcoming appointment:',
+      '',
+      'Service: {{serviceName}}',
+      'Staff: {{staffName}}',
+      'Date: {{date}}',
+      'Time: {{time}}',
+      '',
+      'Please arrive 5 minutes early. If you need to reschedule or cancel, please contact us as soon as possible.',
+      '',
+      'We look forward to seeing you!'
+    ].join('\n')
   }
 }
 
@@ -137,7 +137,7 @@ export default function EmailTemplatesSettings() {
   const loadTemplates = async () => {
     try {
       const response = await api.get('/settings/email-templates')
-      setTemplates({ ...defaultTemplates, ...response.data })
+      setTemplates({ ...defaultTemplates, ...response.data.data })
     } catch (error) {
       console.error('Failed to load email templates:', error)
       setTemplates(defaultTemplates)

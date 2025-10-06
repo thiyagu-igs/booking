@@ -14,9 +14,13 @@
     "worker": "ts-node src/scripts/worker.ts",
     "worker:dev": "ts-node-dev --respawn --transpile-only src/scripts/worker.ts",
     "worker:staging": "NODE_ENV=staging ts-node-dev --respawn --transpile-only --env-file=.env.staging src/scripts/worker.ts",
-    "migrate": "knex migrate:latest --knexfile src/knexfile.ts",
-    "migrate:rollback": "knex migrate:rollback --knexfile src/knexfile.ts",
-    "migrate:make": "knex migrate:make --knexfile src/knexfile.ts",
+    "migrate": "knex migrate:latest",
+    "migrate:rollback": "knex migrate:rollback",
+    "migrate:make": "knex migrate:make",
+    "seed": "knex seed:run",
+    "seed:make": "knex seed:make",
+    "db:reset": "npm run migrate:rollback && npm run migrate && npm run seed",
+    "db:test": "node test-db-connection.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:frontend": "cd frontend && npm test",
@@ -52,6 +56,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-validator": "^7.2.1",
     "googleapis": "^128.0.0",
     "helmet": "^7.1.0",
     "joi": "^17.11.0",
@@ -61,7 +66,6 @@
     "redis": "^4.6.10",
     "twilio": "^4.23.0",
     "uuid": "^9.0.1",
-    "web-push": "^3.6.7",
     "winston": "^3.11.0",
     "zod": "^3.22.4"
   },
@@ -83,6 +87,7 @@
     "ts-jest": "^29.1.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.3.2"
+    "typescript": "^5.3.2",
+    "web-push": "^3.6.7"
   }
 }

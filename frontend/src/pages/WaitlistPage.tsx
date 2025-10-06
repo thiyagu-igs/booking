@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { MagnifyingGlassIcon, FunnelIcon, TrashIcon } from '@heroicons/react/24/outline'
-import Card from '../components/Card'
+import { Card } from '../components/Card'
 import Button from '../components/Button'
-import LoadingSpinner from '../components/LoadingSpinner'
+import { LoadingSpinner } from '../components/LoadingSpinner'
 import { api } from '../services/api'
 import { format } from 'date-fns'
 

@@ -1,6 +1,6 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth';
-import { validateTenant } from '../middleware/tenant';
+import { authenticate } from '../middleware/auth';
+import { validateTenantAccess } from '../middleware/tenant';
 import { AnalyticsService } from '../services/AnalyticsService';
 import { validateRequest } from '../middleware/validation';
 import Joi from 'joi';
@@ -22,8 +22,8 @@ const markNoShowSchema = Joi.object({
 });
 
 // Apply authentication and tenant validation to all routes
-router.use(authenticateToken);
-router.use(validateTenant);
+router.use(authenticate);
+router.use(validateTenantAccess);
 
 /**
  * GET /api/analytics/metrics
