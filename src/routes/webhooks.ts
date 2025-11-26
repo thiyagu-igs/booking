@@ -1,9 +1,13 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import { NotificationService } from '../services/NotificationService';
 import { WaitlistService } from '../services/WaitlistService';
 import { SlotService } from '../services/SlotService';
 import { AuditService } from '../services/AuditService';
+import { WaitlistRepository } from '../repositories/WaitlistRepository';
+import { ServiceRepository } from '../repositories/ServiceRepository';
+import { StaffRepository } from '../repositories/StaffRepository';
+import { SlotRepository } from '../repositories/SlotRepository';
 import { logger } from '../config/logger';
 
 const router = express.Router();
@@ -15,7 +19,7 @@ router.post('/twilio/sms', [
   body('From').notEmpty().withMessage('From phone number is required'),
   body('Body').notEmpty().withMessage('Message body is required'),
   body('MessageSid').notEmpty().withMessage('Message SID is required')
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -79,7 +83,7 @@ router.post('/twilio/whatsapp', [
   body('From').notEmpty().withMessage('From phone number is required'),
   body('Body').notEmpty().withMessage('Message body is required'),
   body('MessageSid').notEmpty().withMessage('Message SID is required')
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -139,7 +143,7 @@ router.post('/twilio/whatsapp', [
 /**
  * SendGrid webhook endpoint for email delivery tracking
  */
-router.post('/sendgrid/events', express.json(), async (req, res) => {
+router.post('/sendgrid/events', express.json(), async (req: Request, res: Response) => {
   try {
     const events = req.body;
     
@@ -207,30 +211,42 @@ async function processSMSResponse(notification: any, action: 'confirm' | 'declin
     return;
   }
 
-  // Initialize services with tenant context
-  const waitlistService = new WaitlistService(db, notification.tenant_id);
-  const slotService = new SlotService(db, notification.tenant_id);
-  const auditService = new AuditService(db, notification.tenant_id);
+  // Initialize repositories with tenant context
+  const waitlistRepo = new WaitlistRepository(notification.tenant_id);
+  const serviceRepo = new ServiceRepository(notification.tenant_id);
+  const staffRepo = new StaffRepository(notification.tenant_id);
+  const slotRepo = new SlotRepository(notification.tenant_id);
+  
+  // Initialize services with proper dependencies
+  const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
+  const slotService = new SlotService(
+    slotRepo,
+    waitlistRepo,
+    serviceRepo,
+    staffRepo,
+    waitlistService,
+    notification.tenant_id
+  );
 
   try {
     if (action === 'confirm') {
-      // Confirm the booking
-      await slotService.confirmSlotBooking(notification.slot_id, notification.waitlist_entry_id);
+      // Confirm the booking using bookSlot
+      await slotService.bookSlot(notification.slot_id);
       
       // Log the confirmation
-      await auditService.logAction(
-        'system',
-        null,
-        'confirm_booking_sms',
-        'slot',
-        notification.slot_id,
-        {},
-        { 
+      await AuditService.log({
+        tenantId: notification.tenant_id,
+        actorType: 'system',
+        action: 'confirm_booking_sms',
+        resourceType: 'slot',
+        resourceId: notification.slot_id,
+        metadata: { 
           confirmed_via: 'sms',
           message_sid: messageSid,
-          customer_name: notification.customer_name
+          customer_name: notification.customer_name,
+          waitlist_entry_id: notification.waitlist_entry_id
         }
-      );
+      });
       
       logger.info('Booking confirmed via SMS', {
         slotId: notification.slot_id,
@@ -239,23 +255,24 @@ async function processSMSResponse(notification: any, action: 'confirm' | 'declin
       });
       
     } else {
-      // Decline the booking and trigger cascade
-      await slotService.declineSlotBooking(notification.slot_id, notification.waitlist_entry_id);
+      // Decline the booking: release hold and open slot for cascade
+      await slotService.releaseHold(notification.slot_id);
+      await slotService.openSlot(notification.slot_id);
       
       // Log the decline
-      await auditService.logAction(
-        'system',
-        null,
-        'decline_booking_sms',
-        'slot',
-        notification.slot_id,
-        {},
-        { 
+      await AuditService.log({
+        tenantId: notification.tenant_id,
+        actorType: 'system',
+        action: 'decline_booking_sms',
+        resourceType: 'slot',
+        resourceId: notification.slot_id,
+        metadata: { 
           declined_via: 'sms',
           message_sid: messageSid,
-          customer_name: notification.customer_name
+          customer_name: notification.customer_name,
+          waitlist_entry_id: notification.waitlist_entry_id
         }
-      );
+      });
       
       logger.info('Booking declined via SMS', {
         slotId: notification.slot_id,

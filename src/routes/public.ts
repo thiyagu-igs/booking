@@ -1,10 +1,11 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
+import { Twilio } from 'twilio';
 import { WaitlistRepository } from '../repositories/WaitlistRepository';
 import { ServiceRepository } from '../repositories/ServiceRepository';
 import { StaffRepository } from '../repositories/StaffRepository';
 import { TenantRepository } from '../repositories/TenantRepository';
-import { NotificationService } from '../services/NotificationService';
+import { NotificationType } from '../models';
 import { validateRequest } from '../middleware/validation';
 import { logger } from '../config/logger';
 
@@ -150,9 +151,17 @@ router.post('/send-otp', validateRequest(sendOTPSchema), async (req: Request, re
     const otpKey = `otp:${tenant_id}:${phone}`;
     await redis.setex(otpKey, 300, otp_code); // 5 minutes
     
-    // Send OTP via SMS (using notification service)
-    const notificationService = new NotificationService(tenant_id);
-    await notificationService.sendSMS(phone, `Your verification code is: ${otp_code}. Valid for 5 minutes.`);
+    // Send OTP via SMS using Twilio directly
+    const twilioClient = new Twilio(
+      process.env.TWILIO_ACCOUNT_SID!,
+      process.env.TWILIO_AUTH_TOKEN!
+    );
+    
+    await twilioClient.messages.create({
+      body: `Your verification code is: ${otp_code}. Valid for 5 minutes.`,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: phone
+    });
     
     logger.info(`OTP sent to ${phone} for tenant ${tenant_id}`);
     
@@ -218,7 +227,7 @@ router.post('/waitlist', validateRequest(joinWaitlistSchema), async (req: Reques
     const waitlistRepo = new WaitlistRepository(tenant_id);
     
     // Check if customer already has 3 active entries
-    const activeEntries = await waitlistRepo.findByPhone(phone, 'active');
+    const activeEntries = await waitlistRepo.findActiveByPhone(phone);
     if (activeEntries.length >= 3) {
       return res.status(400).json({
         error: { 
@@ -228,14 +237,8 @@ router.post('/waitlist', validateRequest(joinWaitlistSchema), async (req: Reques
       });
     }
     
-    // Calculate priority score
-    const priorityScore = await waitlistRepo.calculatePriorityScore({
-      vip_status: false, // Default for public signups
-      service_match: true,
-      staff_preference: !!staff_id,
-      time_window_match: true,
-      recency_bonus: 0
-    });
+    // Use default priority score for public waitlist signups
+    const priorityScore = 50;
     
     // Create waitlist entry
     const entry = await waitlistRepo.create({
@@ -247,7 +250,10 @@ router.post('/waitlist', validateRequest(joinWaitlistSchema), async (req: Reques
       earliest_time: new Date(earliest_time),
       latest_time: new Date(latest_time),
       priority_score: priorityScore,
-      status: 'active'
+      status: 'active',
+      vip_status: false,
+      notification_channels: [NotificationType.SMS],
+      preferred_channel: NotificationType.SMS
     });
     
     logger.info(`Customer ${customer_name} joined waitlist for tenant ${tenant_id}`);

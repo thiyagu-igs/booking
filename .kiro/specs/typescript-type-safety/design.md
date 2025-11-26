@@ -330,14 +330,253 @@ All changes are type-level only. No runtime behavior changes except:
 
 Both changes are improvements, not breaking changes.
 
+### 6. Service Constructor Patterns
+
+**Issue**: Services have inconsistent constructor signatures across the codebase.
+
+**NotificationService Constructor**:
+```typescript
+// Current signature
+constructor(db: any, tenantId: string)
+
+// Usage in public.ts (INCORRECT)
+new NotificationService(tenant_id)  // Missing db parameter
+```
+
+**Correction**:
+```typescript
+// In public.ts
+const db = req.app.locals.db;
+const notificationService = new NotificationService(db, tenant_id);
+```
+
+**WaitlistService Constructor**:
+```typescript
+// Current signature
+constructor(
+  waitlistRepo: WaitlistRepository,
+  serviceRepo: ServiceRepository,
+  staffRepo: StaffRepository
+)
+
+// Usage in webhooks.ts (INCORRECT)
+new WaitlistService(db, notification.tenant_id)  // Wrong parameters
+```
+
+**Correction**:
+```typescript
+// In webhooks.ts
+const waitlistRepo = new WaitlistRepository(notification.tenant_id);
+const serviceRepo = new ServiceRepository(notification.tenant_id);
+const staffRepo = new StaffRepository(notification.tenant_id);
+const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
+```
+
+**SlotService Constructor**:
+```typescript
+// Current signature
+constructor(
+  slotRepo: SlotRepository,
+  waitlistRepo: WaitlistRepository,
+  serviceRepo: ServiceRepository,
+  staffRepo: StaffRepository,
+  waitlistService: WaitlistService,
+  tenantId: string
+)
+
+// Usage in webhooks.ts (INCORRECT)
+new SlotService(db, notification.tenant_id)  // Wrong parameters
+```
+
+**Correction**:
+```typescript
+// In webhooks.ts - instantiate all dependencies
+const slotRepo = new SlotRepository(notification.tenant_id);
+const waitlistRepo = new WaitlistRepository(notification.tenant_id);
+const serviceRepo = new ServiceRepository(notification.tenant_id);
+const staffRepo = new StaffRepository(notification.tenant_id);
+const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
+const slotService = new SlotService(
+  slotRepo,
+  waitlistRepo,
+  serviceRepo,
+  staffRepo,
+  waitlistService,
+  notification.tenant_id
+);
+```
+
+**Rationale**: Services use dependency injection. Route handlers must instantiate all required dependencies.
+
+### 7. Repository Method Signatures
+
+**Issue**: Repository methods are being called with incorrect parameters.
+
+**WaitlistRepository.findByPhone**:
+```typescript
+// Actual signature
+async findByPhone(phone: string): Promise<WaitlistEntry[]>
+
+// Incorrect usage in public.ts
+await waitlistRepo.findByPhone(phone, 'active')  // Too many arguments
+```
+
+**Correction**:
+```typescript
+// Use findActiveByPhone instead
+const activeEntries = await waitlistRepo.findActiveByPhone(phone);
+```
+
+**WaitlistRepository.calculatePriorityScore**:
+```typescript
+// This is a PRIVATE method - cannot be called externally
+private calculatePriorityScore(entry: WaitlistEntry): number
+
+// Incorrect usage in public.ts
+await waitlistRepo.calculatePriorityScore({...})  // Cannot access private method
+```
+
+**Correction**:
+```typescript
+// Calculate priority score inline or use a public method
+// For public routes, use a default priority score
+const priorityScore = 50; // Default score for public signups
+```
+
+**Rationale**: Use the correct repository methods that match the actual implementation.
+
+### 8. WaitlistEntry Creation
+
+**Issue**: Creating WaitlistEntry objects without all required properties.
+
+**Missing Properties**:
+- `vip_status` (required, defaults to false)
+- `notification_channels` (required, NotificationType[])
+- `preferred_channel` (required, NotificationType)
+
+**Correction**:
+```typescript
+const entry = await waitlistRepo.create({
+  customer_name,
+  phone,
+  email,
+  service_id,
+  staff_id,
+  earliest_time: new Date(earliest_time),
+  latest_time: new Date(latest_time),
+  priority_score: priorityScore,
+  status: 'active',
+  vip_status: false,  // Add this
+  notification_channels: [NotificationType.SMS],  // Add this
+  preferred_channel: NotificationType.SMS  // Add this
+});
+```
+
+**Rationale**: The WaitlistEntry interface requires these fields. Omitting them causes type errors.
+
+### 9. Error Type Handling
+
+**Issue**: Errors in catch blocks have 'unknown' type by default in strict TypeScript.
+
+**Current (Incorrect)**:
+```typescript
+catch (error) {
+  if (error.statusCode === 410) {  // TS18046: 'error' is of type 'unknown'
+    // ...
+  }
+  return { error: error.message };  // TS18046: 'error' is of type 'unknown'
+}
+```
+
+**Correction Pattern 1 - Type Guard**:
+```typescript
+catch (error) {
+  if (error instanceof Error) {
+    return { error: error.message };
+  }
+  return { error: 'Unknown error' };
+}
+```
+
+**Correction Pattern 2 - Type Assertion**:
+```typescript
+catch (error) {
+  const err = error as any;
+  if (err.statusCode === 410) {
+    // ...
+  }
+  return { error: err.message || 'Unknown error' };
+}
+```
+
+**Rationale**: TypeScript 4.4+ treats catch clause variables as 'unknown' by default for better type safety.
+
+### 10. AuditService Static Methods
+
+**Issue**: AuditService uses static methods, but code tries to instantiate it.
+
+**Current (Incorrect)**:
+```typescript
+const auditService = new AuditService(db, notification.tenant_id);
+await auditService.logAction(...)  // logAction doesn't exist as instance method
+```
+
+**Correction**:
+```typescript
+// Use static methods directly
+await AuditService.log({
+  tenantId: notification.tenant_id,
+  actorType: 'system',
+  action: 'confirm_booking_sms',
+  resourceType: 'slot',
+  resourceId: notification.slot_id,
+  metadata: {
+    confirmed_via: 'sms',
+    message_sid: messageSid,
+    customer_name: notification.customer_name
+  }
+});
+```
+
+**Rationale**: AuditService is designed as a static utility class, not an instantiable service.
+
+### 11. NotificationService.sendSMS Method
+
+**Issue**: NotificationService doesn't have a public `sendSMS` method.
+
+**Available Methods**:
+- `sendNotification()` - Multi-channel with fallback
+- `sendEmailNotification()` - Email only
+- `sendSMSNotification()` - SMS only (requires full entry/slot/service/staff objects)
+- `sendWhatsAppNotification()` - WhatsApp only
+
+**Correction for Simple SMS**:
+```typescript
+// For simple SMS without full notification flow, use Twilio directly
+const twilioClient = new Twilio(
+  process.env.TWILIO_ACCOUNT_SID!,
+  process.env.TWILIO_AUTH_TOKEN!
+);
+
+await twilioClient.messages.create({
+  body: `Your verification code is: ${otp_code}. Valid for 5 minutes.`,
+  from: process.env.TWILIO_PHONE_NUMBER,
+  to: phone
+});
+```
+
+**Rationale**: NotificationService is designed for slot notifications with full context. Simple SMS should use Twilio directly.
+
 ## Performance Considerations
 
 - Type annotations have zero runtime cost (erased during compilation)
 - Notification channel validation adds minimal overhead (one filter operation)
 - Redis multi-command chaining has identical performance to current implementation
+- Proper dependency injection may slightly increase memory usage but improves testability
 
 ## Security Considerations
 
 - Tenant ID null checks prevent unauthorized access to tenant data
 - Notification channel validation prevents injection of invalid channel types
 - Type safety reduces risk of runtime errors in production
+- Proper error typing prevents information leakage through error messages

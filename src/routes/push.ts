@@ -7,6 +7,13 @@ import { logger } from '../config/logger';
 
 const router = express.Router();
 
+// Subscription interface for database records
+interface PushSubscriptionRecord {
+  endpoint: string;
+  p256dh_key: string;
+  auth_key: string;
+}
+
 // Configure web-push with VAPID keys
 const vapidEmail = process.env.VAPID_EMAIL || 'admin@waitlist.com';
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || 'TZkI9PmdkJpikcMwRiL3OsZfC_jK9sIg9Igd3K2UjObg3TzLxC9y49f3S8vU4jYre8avyNTISWVeU5YDh4HPb-w';
@@ -127,7 +134,7 @@ router.post('/send/:userId', authenticate, validateRequest(sendNotificationSchem
     });
     
     // Send to all user's subscriptions
-    const sendPromises = subscriptions.map(async (sub) => {
+    const sendPromises = subscriptions.map(async (sub: PushSubscriptionRecord) => {
       try {
         const pushSubscription = {
           endpoint: sub.endpoint,
@@ -140,16 +147,17 @@ router.post('/send/:userId', authenticate, validateRequest(sendNotificationSchem
         await webpush.sendNotification(pushSubscription, payload);
         return { success: true, endpoint: sub.endpoint };
       } catch (error) {
+        const err = error as any;
         logger.error(`Failed to send push notification to ${sub.endpoint}:`, error);
         
         // Remove invalid subscriptions
-        if (error.statusCode === 410) {
+        if (err.statusCode === 410) {
           await db('push_subscriptions')
             .where({ endpoint: sub.endpoint })
             .del();
         }
         
-        return { success: false, endpoint: sub.endpoint, error: error.message };
+        return { success: false, endpoint: sub.endpoint, error: err.message || 'Unknown error' };
       }
     });
     
@@ -201,7 +209,7 @@ router.post('/broadcast', authenticate, validateRequest(sendNotificationSchema),
     });
     
     // Send to all subscriptions
-    const sendPromises = subscriptions.map(async (sub) => {
+    const sendPromises = subscriptions.map(async (sub: PushSubscriptionRecord) => {
       try {
         const pushSubscription = {
           endpoint: sub.endpoint,
@@ -214,16 +222,17 @@ router.post('/broadcast', authenticate, validateRequest(sendNotificationSchema),
         await webpush.sendNotification(pushSubscription, payload);
         return { success: true, endpoint: sub.endpoint };
       } catch (error) {
+        const err = error as any;
         logger.error(`Failed to send push notification to ${sub.endpoint}:`, error);
         
         // Remove invalid subscriptions
-        if (error.statusCode === 410) {
+        if (err.statusCode === 410) {
           await db('push_subscriptions')
             .where({ endpoint: sub.endpoint })
             .del();
         }
         
-        return { success: false, endpoint: sub.endpoint, error: error.message };
+        return { success: false, endpoint: sub.endpoint, error: err.message || 'Unknown error' };
       }
     });
     

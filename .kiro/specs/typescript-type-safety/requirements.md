@@ -87,13 +87,68 @@ This specification addresses TypeScript type safety issues across the booking/wa
 3. THE System SHALL eliminate all TS7006 errors in middleware files
 4. THE System SHALL ensure custom properties on Request objects are properly typed through declaration merging
 
-### Requirement 7: Compilation Success
+### Requirement 7: Service Constructor Consistency
+
+**User Story:** As a developer, I want service class constructors to have consistent signatures, so that services can be instantiated correctly throughout the application.
+
+#### Acceptance Criteria
+
+1. WHEN THE System instantiates NotificationService, THE System SHALL provide both db and tenantId parameters
+2. WHEN THE System instantiates WaitlistService, THE System SHALL provide repository instances instead of db and tenantId
+3. WHEN THE System instantiates SlotService, THE System SHALL provide all required repository and service dependencies
+4. THE System SHALL eliminate TS2554 errors related to incorrect argument counts in service constructors
+
+### Requirement 8: Repository Method Signatures
+
+**User Story:** As a developer, I want repository methods to match their actual implementations, so that data access operations work correctly.
+
+#### Acceptance Criteria
+
+1. WHEN THE System calls WaitlistRepository.findByPhone, THE System SHALL provide only the phone parameter
+2. WHEN THE System accesses WaitlistRepository.calculatePriorityScore, THE System SHALL recognize it as a private method
+3. THE System SHALL eliminate TS2554 errors related to incorrect argument counts in repository methods
+4. THE System SHALL eliminate TS2341 errors related to accessing private methods
+
+### Requirement 9: Data Model Completeness
+
+**User Story:** As a developer, I want data model objects to include all required properties, so that database operations succeed.
+
+#### Acceptance Criteria
+
+1. WHEN THE System creates a WaitlistEntry, THE System SHALL include vip_status, notification_channels, and preferred_channel properties
+2. THE System SHALL eliminate TS2345 errors related to missing required properties
+3. THE System SHALL eliminate TS2353 errors related to unknown properties in object literals
+4. THE System SHALL ensure all required WaitlistEntry fields are provided during creation
+
+### Requirement 10: Error Type Handling
+
+**User Story:** As a developer, I want error objects to be properly typed in catch blocks, so that error handling is type-safe.
+
+#### Acceptance Criteria
+
+1. WHEN THE System catches errors in try-catch blocks, THE System SHALL properly type error parameters
+2. WHEN THE System accesses error properties, THE System SHALL use type guards or type assertions
+3. THE System SHALL eliminate TS7006 errors related to implicit 'any' type on error parameters
+4. THE System SHALL eliminate TS18046 errors related to accessing properties on 'unknown' type errors
+
+### Requirement 11: Static Method Usage
+
+**User Story:** As a developer, I want to use AuditService methods correctly, so that audit logging works as designed.
+
+#### Acceptance Criteria
+
+1. WHEN THE System calls AuditService methods, THE System SHALL use static method syntax
+2. THE System SHALL eliminate TS2339 errors related to missing instance methods on AuditService
+3. THE System SHALL not attempt to instantiate AuditService with constructor parameters
+4. THE System SHALL use AuditService.log or AuditService.logFromRequest for audit logging
+
+### Requirement 12: Compilation Success
 
 **User Story:** As a developer, I want the TypeScript compilation to succeed without errors, so that the application can be built and deployed.
 
 #### Acceptance Criteria
 
 1. WHEN THE System runs TypeScript compilation, THE System SHALL complete without any type errors
-2. THE System SHALL reduce the error count from 49 to 0 across all affected files
+2. THE System SHALL reduce the error count to 0 across all affected files
 3. THE System SHALL maintain backward compatibility with existing functionality while fixing type errors
 4. THE System SHALL not introduce new type errors in the process of fixing existing ones

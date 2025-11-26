@@ -1,9 +1,17 @@
-import { knex } from '../../config/database';
+import db from '../../database/connection';
 import { v4 as uuidv4 } from 'uuid';
+import { 
+  Tenant, 
+  User, 
+  Staff, 
+  Service, 
+  WaitlistEntry, 
+  Slot 
+} from '../../models';
 
 export async function setupTestDatabase(): Promise<void> {
   // Run migrations
-  await knex.migrate.latest();
+  await db.migrate.latest();
   
   // Clear all test data
   await cleanupTestDatabase();
@@ -11,34 +19,34 @@ export async function setupTestDatabase(): Promise<void> {
 
 export async function cleanupTestDatabase(): Promise<void> {
   // Delete in reverse dependency order
-  await knex('audit_logs').del();
-  await knex('notifications').del();
-  await knex('calendar_events').del();
-  await knex('waitlist_entries').del();
-  await knex('slots').del();
-  await knex('services').del();
-  await knex('staff').del();
-  await knex('users').del();
-  await knex('tenants').del();
+  await db('audit_logs').del();
+  await db('notifications').del();
+  await db('calendar_events').del();
+  await db('waitlist_entries').del();
+  await db('slots').del();
+  await db('services').del();
+  await db('staff').del();
+  await db('users').del();
+  await db('tenants').del();
 }
 
-export async function createTestTenant(data: Partial<any> = {}): Promise<any> {
-  const tenant = {
+export async function createTestTenant(data: Partial<Tenant> = {}): Promise<Tenant> {
+  const tenant: Partial<Tenant> = {
     id: uuidv4(),
     name: 'Test Business',
     timezone: 'America/New_York',
     ...data
   };
   
-  await knex('tenants').insert(tenant);
-  return tenant;
+  await db('tenants').insert(tenant);
+  return tenant as Tenant;
 }
 
-export async function createTestUser(tenantId: string, data: Partial<any> = {}): Promise<any> {
+export async function createTestUser(tenantId: string, data: Partial<User> = {}): Promise<User> {
   const bcrypt = require('bcryptjs');
-  const hashedPassword = await bcrypt.hash('testpassword123', 10);
+  const hashedPassword: string = await bcrypt.hash('testpassword123', 10);
   
-  const user = {
+  const user: Partial<User> = {
     id: uuidv4(),
     tenant_id: tenantId,
     email: 'test@example.com',
@@ -47,12 +55,12 @@ export async function createTestUser(tenantId: string, data: Partial<any> = {}):
     ...data
   };
   
-  await knex('users').insert(user);
-  return user;
+  await db('users').insert(user);
+  return user as User;
 }
 
-export async function createTestStaff(tenantId: string, data: Partial<any> = {}): Promise<any> {
-  const staff = {
+export async function createTestStaff(tenantId: string, data: Partial<Staff> = {}): Promise<Staff> {
+  const staff: Partial<Staff> = {
     id: uuidv4(),
     tenant_id: tenantId,
     name: 'Test Staff',
@@ -61,12 +69,12 @@ export async function createTestStaff(tenantId: string, data: Partial<any> = {})
     ...data
   };
   
-  await knex('staff').insert(staff);
-  return staff;
+  await db('staff').insert(staff);
+  return staff as Staff;
 }
 
-export async function createTestService(tenantId: string, data: Partial<any> = {}): Promise<any> {
-  const service = {
+export async function createTestService(tenantId: string, data: Partial<Service> = {}): Promise<Service> {
+  const service: Partial<Service> = {
     id: uuidv4(),
     tenant_id: tenantId,
     name: 'Test Service',
@@ -76,12 +84,12 @@ export async function createTestService(tenantId: string, data: Partial<any> = {
     ...data
   };
   
-  await knex('services').insert(service);
-  return service;
+  await db('services').insert(service);
+  return service as Service;
 }
 
-export async function createTestWaitlistEntry(tenantId: string, serviceId: string, data: Partial<any> = {}): Promise<any> {
-  const entry = {
+export async function createTestWaitlistEntry(tenantId: string, serviceId: string, data: Partial<WaitlistEntry> = {}): Promise<WaitlistEntry> {
+  const entry: Partial<WaitlistEntry> = {
     id: uuidv4(),
     tenant_id: tenantId,
     customer_name: 'Test Customer',
@@ -95,12 +103,12 @@ export async function createTestWaitlistEntry(tenantId: string, serviceId: strin
     ...data
   };
   
-  await knex('waitlist_entries').insert(entry);
-  return entry;
+  await db('waitlist_entries').insert(entry);
+  return entry as WaitlistEntry;
 }
 
-export async function createTestSlot(tenantId: string, staffId: string, serviceId: string, data: Partial<any> = {}): Promise<any> {
-  const slot = {
+export async function createTestSlot(tenantId: string, staffId: string, serviceId: string, data: Partial<Slot> = {}): Promise<Slot> {
+  const slot: Partial<Slot> = {
     id: uuidv4(),
     tenant_id: tenantId,
     staff_id: staffId,
@@ -111,6 +119,6 @@ export async function createTestSlot(tenantId: string, staffId: string, serviceI
     ...data
   };
   
-  await knex('slots').insert(slot);
-  return slot;
+  await db('slots').insert(slot);
+  return slot as Slot;
 }
