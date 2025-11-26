@@ -88,7 +88,7 @@ class RequestMonitor {
   }
 
   private generateRequestId(): string {
-    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `req_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 
   private startMetricsCollection() {
@@ -126,8 +126,8 @@ class RequestMonitor {
 }
 
 // Error tracking middleware
-export function errorTracking(err: Error, req: Request, res: Response, next: NextFunction) {
-  const errorId = `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+export function errorTracking(err: Error, req: Request, res: Response, _next: NextFunction) {
+  const errorId = `err_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   
   // Log error with context
   logger.error('Application error', {
@@ -195,16 +195,20 @@ export function healthCheck(req: Request, res: Response) {
       version: process.env.npm_package_version || '1.0.0'
     };
 
-    // Determine overall status
-    if (!database.healthy || !redis.healthy) {
+    // Determine overall status based on service status strings
+    const isDatabaseHealthy = database.status === 'healthy';
+    const isRedisHealthy = redis.status === 'healthy' || redis.status === 'disabled';
+    const isExternalHealthy = external.status === 'healthy';
+
+    if (!isDatabaseHealthy || !isRedisHealthy) {
       health.status = 'unhealthy';
       res.status(503);
-    } else if (external.some((service: any) => !service.healthy)) {
+    } else if (!isExternalHealthy) {
       health.status = 'degraded';
     }
 
     res.json(health);
-  }).catch(error => {
+  }).catch((error: Error) => {
     logger.error('Health check failed', { error: error.message });
     res.status(503).json({
       status: 'unhealthy',

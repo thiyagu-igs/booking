@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import webpush from 'web-push';
 import { validateRequest } from '../middleware/validation';
@@ -39,14 +39,14 @@ const sendNotificationSchema = z.object({
 });
 
 // Get VAPID public key
-router.get('/vapid-public-key', (req, res) => {
+router.get('/vapid-public-key', (req: Request, res: Response) => {
   res.json({
     publicKey: vapidPublicKey
   });
 });
 
 // Subscribe to push notifications
-router.post('/subscribe', authenticate, validateRequest(subscribeSchema), async (req, res) => {
+router.post('/subscribe', authenticate, validateRequest(subscribeSchema), async (req: Request, res: Response) => {
   try {
     const { subscription } = req.body;
     const { user_id, tenant_id } = req.user!;
@@ -75,7 +75,7 @@ router.post('/subscribe', authenticate, validateRequest(subscribeSchema), async 
 });
 
 // Unsubscribe from push notifications
-router.post('/unsubscribe', authenticate, validateRequest(subscribeSchema), async (req, res) => {
+router.post('/unsubscribe', authenticate, validateRequest(subscribeSchema), async (req: Request, res: Response) => {
   try {
     const { subscription } = req.body;
     const { user_id } = req.user!;
@@ -98,7 +98,7 @@ router.post('/unsubscribe', authenticate, validateRequest(subscribeSchema), asyn
 });
 
 // Send push notification to user
-router.post('/send/:userId', authenticate, validateRequest(sendNotificationSchema), async (req, res) => {
+router.post('/send/:userId', authenticate, validateRequest(sendNotificationSchema), async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const { title, body, data, actions } = req.body;
@@ -173,7 +173,7 @@ router.post('/send/:userId', authenticate, validateRequest(sendNotificationSchem
 });
 
 // Send push notification to all users in tenant
-router.post('/broadcast', authenticate, validateRequest(sendNotificationSchema), async (req, res) => {
+router.post('/broadcast', authenticate, validateRequest(sendNotificationSchema), async (req: Request, res: Response) => {
   try {
     const { title, body, data, actions } = req.body;
     const { tenant_id } = req.user!;

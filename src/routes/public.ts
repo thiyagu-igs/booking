@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import { WaitlistRepository } from '../repositories/WaitlistRepository';
 import { ServiceRepository } from '../repositories/ServiceRepository';
@@ -34,7 +34,7 @@ const verifyOTPSchema = z.object({
 });
 
 // Get available tenants for auth screen
-router.get('/tenants', async (req, res) => {
+router.get('/tenants', async (req: Request, res: Response) => {
   try {
     const tenantRepo = new TenantRepository('system'); // Use system context for public access
     const tenants = await tenantRepo.findAll();
@@ -59,7 +59,7 @@ router.get('/tenants', async (req, res) => {
 });
 
 // Get business information for customer-facing page
-router.get('/business/:tenantId', async (req, res) => {
+router.get('/business/:tenantId', async (req: Request, res: Response) => {
   try {
     const { tenantId } = req.params;
     
@@ -92,7 +92,7 @@ router.get('/business/:tenantId', async (req, res) => {
 });
 
 // Get services for a tenant (public)
-router.get('/services', async (req, res) => {
+router.get('/services', async (req: Request, res: Response) => {
   try {
     const { tenant_id } = req.query;
     
@@ -115,7 +115,7 @@ router.get('/services', async (req, res) => {
 });
 
 // Get staff for a tenant (public)
-router.get('/staff', async (req, res) => {
+router.get('/staff', async (req: Request, res: Response) => {
   try {
     const { tenant_id } = req.query;
     
@@ -138,7 +138,7 @@ router.get('/staff', async (req, res) => {
 });
 
 // Send OTP for phone verification
-router.post('/send-otp', validateRequest(sendOTPSchema), async (req, res) => {
+router.post('/send-otp', validateRequest(sendOTPSchema), async (req: Request, res: Response) => {
   try {
     const { tenant_id, phone } = req.body;
     
@@ -166,7 +166,7 @@ router.post('/send-otp', validateRequest(sendOTPSchema), async (req, res) => {
 });
 
 // Verify OTP
-router.post('/verify-otp', validateRequest(verifyOTPSchema), async (req, res) => {
+router.post('/verify-otp', validateRequest(verifyOTPSchema), async (req: Request, res: Response) => {
   try {
     const { tenant_id, phone, otp_code } = req.body;
     
@@ -200,7 +200,7 @@ router.post('/verify-otp', validateRequest(verifyOTPSchema), async (req, res) =>
 });
 
 // Join waitlist (public endpoint)
-router.post('/waitlist', validateRequest(joinWaitlistSchema), async (req, res) => {
+router.post('/waitlist', validateRequest(joinWaitlistSchema), async (req: Request, res: Response) => {
   try {
     const { tenant_id, customer_name, phone, email, service_id, staff_id, earliest_time, latest_time } = req.body;
     

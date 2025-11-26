@@ -575,10 +575,10 @@ export class NotificationService {
     const key = `rate_limit:notifications:${this.tenantId}`;
 
     try {
-      const multi = redisClient.multi();
-      multi.incr(key);
-      multi.expire(key, Math.floor(windowMs / 1000));
-      await multi.exec();
+      await redisClient.multi()
+        .incr(key)
+        .expire(key, Math.floor(windowMs / 1000))
+        .exec();
     } catch (error) {
       if (process.env.MOCK_REDIS !== 'true') {
         console.error('Failed to increment rate limit:', error);

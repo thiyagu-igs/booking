@@ -1,7 +1,22 @@
 import { WaitlistRepository } from '../repositories/WaitlistRepository';
 import { ServiceRepository } from '../repositories/ServiceRepository';
 import { StaffRepository } from '../repositories/StaffRepository';
-import { WaitlistEntry, WaitlistStatus } from '../models';
+import { WaitlistEntry, WaitlistStatus, NotificationType } from '../models';
+
+/**
+ * Type guard to check if a string is a valid NotificationType
+ */
+function isValidNotificationType(value: string): value is NotificationType {
+  return Object.values(NotificationType).includes(value as NotificationType);
+}
+
+/**
+ * Validates and converts string array to NotificationType array
+ * Filters out invalid notification types
+ */
+function validateNotificationChannels(channels: string[]): NotificationType[] {
+  return channels.filter(isValidNotificationType);
+}
 
 export interface CreateWaitlistEntryData {
   customer_name: string;
@@ -120,18 +135,27 @@ export class WaitlistService {
       created_at: now
     });
 
-    // Validate notification channels
-    let notificationChannels = data.notification_channels;
-    let preferredChannel = data.preferred_channel || 'email';
-
-    // Default notification channels based on available contact info
-    if (!notificationChannels || notificationChannels.length === 0) {
-      notificationChannels = [];
-      if (data.email) notificationChannels.push('email');
+    // Validate and convert notification channels
+    let notificationChannels: NotificationType[] = [];
+    
+    if (data.notification_channels && data.notification_channels.length > 0) {
+      // Validate and filter the provided channels
+      notificationChannels = validateNotificationChannels(data.notification_channels);
+    }
+    
+    // Default notification channels based on available contact info if none provided or all invalid
+    if (notificationChannels.length === 0) {
+      if (data.email) notificationChannels.push(NotificationType.EMAIL);
       if (data.phone) {
-        notificationChannels.push('sms');
-        notificationChannels.push('whatsapp');
+        notificationChannels.push(NotificationType.SMS);
+        notificationChannels.push(NotificationType.WHATSAPP);
       }
+    }
+
+    // Validate and convert preferred channel
+    let preferredChannel: NotificationType = NotificationType.EMAIL;
+    if (data.preferred_channel && isValidNotificationType(data.preferred_channel)) {
+      preferredChannel = data.preferred_channel as NotificationType;
     }
 
     // Ensure preferred channel is in notification channels
@@ -328,12 +352,27 @@ export class WaitlistService {
       });
     }
 
-    // Prepare update data
+    // Prepare update data - exclude notification fields that need conversion
+    const { notification_channels, preferred_channel, ...otherUpdates } = updates;
+    
     const updateData: Partial<WaitlistEntry> = {
-      ...updates,
+      ...otherUpdates,
       priority_score: newPriorityScore,
       updated_at: new Date()
     };
+
+    // Validate and convert notification channels if being updated
+    if (notification_channels) {
+      updateData.notification_channels = validateNotificationChannels(notification_channels);
+    }
+
+    // Validate and convert preferred channel if being updated
+    if (preferred_channel) {
+      if (isValidNotificationType(preferred_channel)) {
+        updateData.preferred_channel = preferred_channel as NotificationType;
+      }
+      // If invalid, we simply don't update it (keep existing value)
+    }
 
     return await this.waitlistRepo.update(entryId, updateData);
   }
