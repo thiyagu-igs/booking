@@ -7,6 +7,7 @@ import { SlotRepository } from './SlotRepository';
 import { WaitlistRepository } from './WaitlistRepository';
 import { AnalyticsRepository } from './AnalyticsRepository';
 import { CalendarEventRepository } from './CalendarEventRepository';
+import { BookingRepository } from './BookingRepository';
 
 export { 
   BaseRepository, 
@@ -17,7 +18,8 @@ export {
   SlotRepository,
   WaitlistRepository,
   AnalyticsRepository,
-  CalendarEventRepository
+  CalendarEventRepository,
+  BookingRepository
 };
 
 // Repository factory for creating tenant-scoped repositories
@@ -56,8 +58,11 @@ export class RepositoryFactory {
     return new CalendarEventRepository(this.tenantId);
   }
 
+  getBookingRepository() {
+    return new BookingRepository(this.tenantId);
+  }
+
   // Additional repositories will be added here as they are implemented
   // getNotificationRepository() { return new NotificationRepository(this.tenantId); }
-  // getBookingRepository() { return new BookingRepository(this.tenantId); }
   // getAuditLogRepository() { return new AuditLogRepository(this.tenantId); }
 }

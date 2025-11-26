@@ -39,3 +39,9 @@ export type {
   CalendarSyncResult, 
   OAuthTokens 
 } from './CalendarService';
+
+export { BookingService } from './BookingService';
+export type {
+  CreateManualBookingData,
+  BookingFilters
+} from './BookingService';
