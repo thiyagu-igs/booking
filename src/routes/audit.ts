@@ -35,11 +35,11 @@ router.get('/logs',
         action: req.query.action as string,
         resourceType: req.query.resourceType as string,
         severity: req.query.severity as string,
-        success: req.query.success as boolean,
+        success: req.query.success === 'true' ? true : req.query.success === 'false' ? false : undefined,
         startDate: req.query.startDate ? new Date(req.query.startDate as string) : undefined,
         endDate: req.query.endDate ? new Date(req.query.endDate as string) : undefined,
-        limit: req.query.limit as number,
-        offset: req.query.offset as number
+        limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
+        offset: req.query.offset ? parseInt(req.query.offset as string) : undefined
       };
 
       const logs = await AuditService.queryLogs(tenantId, filters);

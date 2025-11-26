@@ -4,16 +4,18 @@ import Joi from 'joi';
 /**
  * Middleware to validate request data against Joi schema
  */
-export const validateRequest = (schema: Joi.ObjectSchema) => {
+export const validateRequest = (schema: Joi.ObjectSchema | any, source: 'body' | 'query' = 'body') => {
   return (req: Request, res: Response, next: NextFunction): void => {
-    const { error, value } = schema.validate(req.body, {
+    const dataToValidate = source === 'query' ? req.query : req.body;
+    
+    const { error, value } = schema.validate(dataToValidate, {
       abortEarly: false, // Return all validation errors
       stripUnknown: true, // Remove unknown fields
       convert: true // Convert types when possible
     });
 
     if (error) {
-      const validationErrors = error.details.map(detail => ({
+      const validationErrors = error.details.map((detail: any) => ({
         field: detail.path.join('.'),
         message: detail.message,
         value: detail.context?.value
@@ -27,8 +29,12 @@ export const validateRequest = (schema: Joi.ObjectSchema) => {
       return;
     }
 
-    // Replace req.body with validated and sanitized data
-    req.body = value;
+    // Replace req.body or req.query with validated and sanitized data
+    if (source === 'query') {
+      req.query = value;
+    } else {
+      req.body = value;
+    }
     next();
   };
 };

@@ -100,7 +100,7 @@ export class AuditService {
   static async logAuth(
     tenantId: string,
     userId: string,
-    action: 'LOGIN' | 'LOGOUT' | 'LOGIN_FAILED' | 'TOKEN_REFRESH',
+    action: 'LOGIN' | 'LOGOUT' | 'LOGIN_FAILED' | 'TOKEN_REFRESH' | 'REGISTER' | 'TOKEN_VALIDATED' | 'TOKEN_VALIDATION_FAILED',
     req: Request,
     success: boolean = true,
     errorMessage?: string

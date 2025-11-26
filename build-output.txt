@@ -1,0 +1,84 @@
+
+> waitlist-management-system@1.0.0 build
+> tsc
+
+src/__tests__/helpers/database.ts(6,14): error TS2339: Property 'migrate' does not exist on type 'typeof knex'.
+src/middleware/auth.ts(69,17): error TS2339: Property 'id' does not exist on type 'TokenPayload'.
+src/middleware/monitoring.ts(158,23): error TS2339: Property 'id' does not exist on type 'TokenPayload'.
+src/middleware/monitoring.ts(199,19): error TS2339: Property 'healthy' does not exist on type '{ status: string; latency?: number | undefined; }'.
+src/middleware/monitoring.ts(199,37): error TS2339: Property 'healthy' does not exist on type '{ status: string; }'.
+src/middleware/monitoring.ts(202,25): error TS2339: Property 'some' does not exist on type '{ status: string; }'.
+src/routes/public.ts(79,29): error TS2339: Property 'description' does not exist on type 'Tenant'.
+src/routes/public.ts(80,25): error TS2339: Property 'address' does not exist on type 'Tenant'.
+src/routes/public.ts(81,23): error TS2339: Property 'phone' does not exist on type 'Tenant'.
+src/routes/public.ts(82,23): error TS2339: Property 'hours' does not exist on type 'Tenant'.
+src/routes/public.ts(83,24): error TS2339: Property 'rating' does not exist on type 'Tenant'.
+src/routes/public.ts(84,22): error TS2339: Property 'logo_url' does not exist on type 'Tenant'.
+src/routes/public.ts(154,33): error TS2554: Expected 2 arguments, but got 1.
+src/routes/public.ts(155,31): error TS2339: Property 'sendSMS' does not exist on type 'NotificationService'.
+src/routes/public.ts(221,65): error TS2554: Expected 1 arguments, but got 2.
+src/routes/public.ts(232,46): error TS2341: Property 'calculatePriorityScore' is private and only accessible within class 'WaitlistRepository'.
+src/routes/public.ts(234,7): error TS2353: Object literal may only specify known properties, and 'service_match' does not exist in type 'WaitlistEntry'.
+src/routes/public.ts(241,45): error TS2345: Argument of type '{ customer_name: any; phone: any; email: any; service_id: any; staff_id: any; earliest_time: Date; latest_time: Date; priority_score: number; status: "active"; }' is not assignable to parameter of type 'Omit<WaitlistEntry, "tenant_id" | "id" | "created_at" | "updated_at">'.
+  Type '{ customer_name: any; phone: any; email: any; service_id: any; staff_id: any; earliest_time: Date; latest_time: Date; priority_score: number; status: "active"; }' is missing the following properties from type 'Omit<WaitlistEntry, "tenant_id" | "id" | "created_at" | "updated_at">': vip_status, preferred_channel
+src/routes/push.ts(52,13): error TS2339: Property 'user_id' does not exist on type 'TokenPayload'.
+src/routes/push.ts(52,22): error TS2339: Property 'tenant_id' does not exist on type 'TokenPayload'.
+src/routes/push.ts(81,13): error TS2339: Property 'user_id' does not exist on type 'TokenPayload'.
+src/routes/push.ts(105,13): error TS2339: Property 'tenant_id' does not exist on type 'TokenPayload'.
+src/routes/push.ts(130,51): error TS7006: Parameter 'sub' implicitly has an 'any' type.
+src/routes/push.ts(146,13): error TS18046: 'error' is of type 'unknown'.
+src/routes/push.ts(152,65): error TS18046: 'error' is of type 'unknown'.
+src/routes/push.ts(179,13): error TS2339: Property 'tenant_id' does not exist on type 'TokenPayload'.
+src/routes/push.ts(204,51): error TS7006: Parameter 'sub' implicitly has an 'any' type.
+src/routes/push.ts(220,13): error TS18046: 'error' is of type 'unknown'.
+src/routes/push.ts(226,65): error TS18046: 'error' is of type 'unknown'.
+src/routes/webhooks.ts(18,11): error TS7006: Parameter 'req' implicitly has an 'any' type.
+src/routes/webhooks.ts(18,16): error TS7006: Parameter 'res' implicitly has an 'any' type.
+src/routes/webhooks.ts(82,11): error TS7006: Parameter 'req' implicitly has an 'any' type.
+src/routes/webhooks.ts(82,16): error TS7006: Parameter 'res' implicitly has an 'any' type.
+src/routes/webhooks.ts(211,27): error TS2554: Expected 3 arguments, but got 2.
+src/routes/webhooks.ts(212,23): error TS2554: Expected 6 arguments, but got 2.
+src/routes/webhooks.ts(213,41): error TS2554: Expected 0 arguments, but got 2.
+src/routes/webhooks.ts(218,25): error TS2339: Property 'confirmSlotBooking' does not exist on type 'SlotService'.
+src/routes/webhooks.ts(221,26): error TS2339: Property 'logAction' does not exist on type 'AuditService'.
+src/routes/webhooks.ts(243,25): error TS2339: Property 'declineSlotBooking' does not exist on type 'SlotService'.
+src/routes/webhooks.ts(246,26): error TS2339: Property 'logAction' does not exist on type 'AuditService'.
+src/routes/whatsapp-templates.ts(18,11): error TS7006: Parameter 'req' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(18,16): error TS7006: Parameter 'res' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(52,11): error TS7006: Parameter 'req' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(52,16): error TS7006: Parameter 'res' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(112,11): error TS7006: Parameter 'req' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(112,16): error TS7006: Parameter 'res' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(180,11): error TS7006: Parameter 'req' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(180,16): error TS7006: Parameter 'res' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(229,11): error TS7006: Parameter 'req' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(229,16): error TS7006: Parameter 'res' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(273,11): error TS7006: Parameter 'req' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(273,16): error TS7006: Parameter 'res' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(311,11): error TS7006: Parameter 'req' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(311,16): error TS7006: Parameter 'res' implicitly has an 'any' type.
+src/routes/whatsapp-templates.ts(365,65): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/services/CalendarService.ts(79,15): error TS2339: Property 'tokens' does not exist on type 'Promise<GetAccessTokenResponse> & void'.
+src/services/CalendarService.ts(79,65): error TS2345: Argument of type 'string' is not assignable to parameter of type 'GetAccessTokenCallback'.
+src/services/CalendarService.ts(100,9): error TS2322: Type 'null' is not assignable to type 'string | undefined'.
+src/services/CalendarService.ts(181,9): error TS2322: Type 'null' is not assignable to type 'string | undefined'.
+src/services/CalendarService.ts(247,9): error TS2322: Type 'null' is not assignable to type 'string | undefined'.
+src/services/CalendarService.ts(275,9): error TS2322: Type 'null' is not assignable to type 'string | undefined'.
+src/services/CalendarService.ts(276,9): error TS2322: Type 'null' is not assignable to type 'string | undefined'.
+src/services/CalendarService.ts(277,9): error TS2322: Type 'null' is not assignable to type 'Date | undefined'.
+src/services/CalendarService.ts(279,9): error TS2322: Type 'null' is not assignable to type 'string | undefined'.
+src/services/CalendarService.ts(338,9): error TS2322: Type 'null' is not assignable to type 'string | undefined'.
+src/services/NotificationService.ts(580,13): error TS2339: Property 'expire' does not exist on type '{ incr: (key: string) => { expire: (key: string, seconds: number) => { exec: () => Promise<number[]>; }; }; } | RedisClientMultiCommandType<{ graph: { CONFIG_GET: typeof import("C:/xampp/htdocs/learning/booking/node_modules/@redis/graph/dist/commands/CONFIG_GET"); ... 16 more ...; slowLog: typeof import("C:/xampp/ht...'.
+  Property 'expire' does not exist on type '{ incr: (key: string) => { expire: (key: string, seconds: number) => { exec: () => Promise<number[]>; }; }; }'.
+src/services/NotificationService.ts(581,19): error TS2339: Property 'exec' does not exist on type '{ incr: (key: string) => { expire: (key: string, seconds: number) => { exec: () => Promise<number[]>; }; }; } | RedisClientMultiCommandType<{ graph: { CONFIG_GET: typeof import("C:/xampp/htdocs/learning/booking/node_modules/@redis/graph/dist/commands/CONFIG_GET"); ... 16 more ...; slowLog: typeof import("C:/xampp/ht...'.
+  Property 'exec' does not exist on type '{ incr: (key: string) => { expire: (key: string, seconds: number) => { exec: () => Promise<number[]>; }; }; }'.
+src/services/WaitlistService.ts(160,43): error TS2345: Argument of type '{ customer_name: string; phone: string; email: string | undefined; service_id: string; staff_id: string | undefined; earliest_time: Date; latest_time: Date; priority_score: number; vip_status: boolean; status: WaitlistStatus; notification_channels: string[]; preferred_channel: string; }' is not assignable to parameter of type 'Omit<WaitlistEntry, "tenant_id" | "id" | "created_at" | "updated_at">'.
+  Types of property 'notification_channels' are incompatible.
+    Type 'string[]' is not assignable to type 'NotificationType[]'.
+      Type 'string' is not assignable to type 'NotificationType'.
+src/services/WaitlistService.ts(332,11): error TS2322: Type '{ priority_score: number; updated_at: Date; customer_name?: string | undefined; phone?: string | undefined; email?: string | undefined; service_id?: string | undefined; staff_id?: string | undefined; earliest_time?: Date | undefined; latest_time?: Date | undefined; vip_status?: boolean | undefined; notification_chan...' is not assignable to type 'Partial<WaitlistEntry>'.
+  Types of property 'notification_channels' are incompatible.
+    Type 'string[] | undefined' is not assignable to type 'NotificationType[] | undefined'.
+      Type 'string[]' is not assignable to type 'NotificationType[]'.
+        Type 'string' is not assignable to type 'NotificationType'.

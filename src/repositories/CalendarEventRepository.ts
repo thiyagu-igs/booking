@@ -28,8 +28,8 @@ export class CalendarEventRepository extends BaseRepository<CalendarEvent> {
   /**
    * Find calendar events with specific status
    */
-  async findByStatus(status: string): Promise<CalendarEvent[]> {
-    return this.findAll({ status });
+  async findByStatus(status: CalendarEvent['status']): Promise<CalendarEvent[]> {
+    return this.findAll({ status } as any);
   }
 
   /**

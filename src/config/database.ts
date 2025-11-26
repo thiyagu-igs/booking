@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
-import knex from 'knex';
+import knex, { Knex } from 'knex';
 
 dotenv.config();
+
+export { knex };
 
 export const databaseConfig = {
   development: {

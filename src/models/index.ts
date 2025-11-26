@@ -4,6 +4,12 @@ export interface Tenant {
   id: string;
   name: string;
   timezone: string;
+  description?: string;
+  address?: string;
+  phone?: string;
+  hours?: string;
+  rating?: number;
+  logo_url?: string;
   created_at: Date;
   updated_at?: Date;
 }
@@ -74,7 +80,7 @@ export interface WaitlistEntry {
   priority_score: number;
   vip_status: boolean;
   status: 'active' | 'notified' | 'confirmed' | 'removed';
-  notification_channels?: NotificationType[];
+  notification_channels: NotificationType[];
   preferred_channel: NotificationType;
   created_at: Date;
   updated_at?: Date;

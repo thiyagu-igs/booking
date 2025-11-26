@@ -54,7 +54,7 @@ export const auditMiddleware = (
         }
       });
 
-      return originalEnd.apply(this, args);
+      return originalEnd.apply(this, args as any);
     };
 
     next();

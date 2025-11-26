@@ -28,7 +28,7 @@ router.post('/', validateRequest(slotSchemas.createSlot.body), async (req: Reque
     const serviceRepo = new ServiceRepository(tenantId);
     const staffRepo = new StaffRepository(tenantId);
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
 
     const slotData: CreateSlotData = {
       staff_id: req.body.staff_id,
@@ -66,7 +66,7 @@ router.get('/', async (req: Request, res: Response) => {
     const serviceRepo = new ServiceRepository(tenantId);
     const staffRepo = new StaffRepository(tenantId);
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
 
     // Build filters from query parameters
     const filters: SlotFilters = {};
@@ -117,7 +117,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     const serviceRepo = new ServiceRepository(tenantId);
     const staffRepo = new StaffRepository(tenantId);
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
 
     const slotDetails = await slotService.getSlotWithDetails(slotId);
     
@@ -155,7 +155,7 @@ router.put('/:id', validateRequest(slotSchemas.updateSlot.body), async (req: Req
     const serviceRepo = new ServiceRepository(tenantId);
     const staffRepo = new StaffRepository(tenantId);
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
 
     const updates: Partial<CreateSlotData> = {};
     
@@ -201,7 +201,7 @@ router.post('/:id/open', async (req: Request, res: Response) => {
     const serviceRepo = new ServiceRepository(tenantId);
     const staffRepo = new StaffRepository(tenantId);
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
 
     const matchResult = await slotService.openSlot(slotId);
 
@@ -236,7 +236,7 @@ router.post('/:id/hold', validateRequest(slotSchemas.holdSlot.body), async (req:
     const serviceRepo = new ServiceRepository(tenantId);
     const staffRepo = new StaffRepository(tenantId);
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
 
     const heldSlot = await slotService.holdSlot(slotId, holdDuration);
 
@@ -275,7 +275,7 @@ router.post('/:id/release', async (req: Request, res: Response) => {
     const serviceRepo = new ServiceRepository(tenantId);
     const staffRepo = new StaffRepository(tenantId);
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
 
     const releasedSlot = await slotService.releaseHold(slotId);
 
@@ -314,7 +314,7 @@ router.post('/:id/book', async (req: Request, res: Response) => {
     const serviceRepo = new ServiceRepository(tenantId);
     const staffRepo = new StaffRepository(tenantId);
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
 
     const bookedSlot = await slotService.bookSlot(slotId);
 
@@ -353,7 +353,7 @@ router.post('/:id/cancel', async (req: Request, res: Response) => {
     const serviceRepo = new ServiceRepository(tenantId);
     const staffRepo = new StaffRepository(tenantId);
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
 
     const canceledSlot = await slotService.cancelSlot(slotId);
 
@@ -392,7 +392,7 @@ router.get('/:id/candidates', async (req: Request, res: Response) => {
     const serviceRepo = new ServiceRepository(tenantId);
     const staffRepo = new StaffRepository(tenantId);
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
 
     const slot = await slotService.getSlot(slotId);
     if (!slot) {
@@ -431,7 +431,7 @@ router.post('/process-expired-holds', async (req: Request, res: Response) => {
     const serviceRepo = new ServiceRepository(tenantId);
     const staffRepo = new StaffRepository(tenantId);
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
 
     const result = await slotService.processExpiredHolds();
 
@@ -464,7 +464,7 @@ router.get('/stats/:startDate/:endDate', async (req: Request, res: Response) => 
     const serviceRepo = new ServiceRepository(tenantId);
     const staffRepo = new StaffRepository(tenantId);
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
 
     const stats = await slotService.getSlotStats(startDate, endDate);
 

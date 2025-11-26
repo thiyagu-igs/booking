@@ -13,6 +13,11 @@ export interface AnalyticsMetrics {
   completedBookings: number;
   noShowBookings: number;
   canceledBookings: number;
+  waitlistRevenue?: number;
+  directRevenue?: number;
+  walkInRevenue?: number;
+  avgResponseTime?: number;
+  activeWaitlistEntries?: number;
 }
 
 export interface DailyAnalytics {
@@ -22,6 +27,8 @@ export interface DailyAnalytics {
   waitlist_bookings: number;
   revenue: number;
   no_shows: number;
+  total_bookings?: number;
+  notifications_sent?: number;
 }
 
 export interface TimeToFillAnalysis {

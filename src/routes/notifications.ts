@@ -46,7 +46,7 @@ router.post('/confirm/:token', async (req, res) => {
     const staffRepo = new StaffRepository(decoded.tenantId);
     
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, decoded.tenantId);
 
     // Get the waitlist entry and slot
     const entry = await waitlistService.getWaitlistEntry(decoded.entryId);
@@ -257,7 +257,7 @@ router.post('/decline/:token', async (req, res) => {
     const staffRepo = new StaffRepository(decoded.tenantId);
     
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, decoded.tenantId);
 
     // Get the waitlist entry and slot
     const entry = await waitlistService.getWaitlistEntry(decoded.entryId);
@@ -461,7 +461,7 @@ router.post('/handle-expired/:slotId', authenticate, async (req, res) => {
     const staffRepo = new StaffRepository(tenantId);
     
     const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+    const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
     const notificationService = new NotificationService(req.app.locals.db, tenantId);
 
     // Get the slot to verify it exists and is held

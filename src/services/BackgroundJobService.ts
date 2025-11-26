@@ -86,7 +86,8 @@ export class BackgroundJobService {
             waitlistRepo,
             serviceRepo,
             staffRepo,
-            waitlistService
+            waitlistService,
+            currentTenantId
           );
 
           // Process expired holds for this tenant
@@ -147,7 +148,7 @@ export class BackgroundJobService {
       const staffRepo = new StaffRepository(tenantId);
       
       const waitlistService = new WaitlistService(waitlistRepo, serviceRepo, staffRepo);
-      const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService);
+      const slotService = new SlotService(slotRepo, waitlistRepo, serviceRepo, staffRepo, waitlistService, tenantId);
       const notificationService = new NotificationService(this.db, tenantId);
 
       // Get slot details

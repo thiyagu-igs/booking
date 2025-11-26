@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import { WhatsAppTemplateService } from '../services/WhatsAppTemplateService';
 import { authenticate } from '../middleware/auth';
@@ -15,7 +15,7 @@ router.use(authenticate);
  */
 router.get('/', [
   query('status').optional().isIn(['pending', 'approved', 'rejected', 'disabled'])
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -23,7 +23,7 @@ router.get('/', [
     }
 
     const { status } = req.query;
-    const templateService = new WhatsAppTemplateService(req.db, req.tenantId);
+    const templateService = new WhatsAppTemplateService(req.db, req.tenantId!);
     
     const templates = await templateService.getTemplates(status as WhatsAppTemplateStatus);
     
@@ -49,7 +49,7 @@ router.get('/', [
  */
 router.get('/:templateId', [
   param('templateId').isUUID().withMessage('Valid template ID is required')
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -57,7 +57,7 @@ router.get('/:templateId', [
     }
 
     const { templateId } = req.params;
-    const templateService = new WhatsAppTemplateService(req.db, req.tenantId);
+    const templateService = new WhatsAppTemplateService(req.db, req.tenantId!);
     
     const template = await templateService.getTemplate(templateId);
     
@@ -109,7 +109,7 @@ router.post('/', [
   body('templateComponents.body.text')
     .notEmpty()
     .withMessage('Template body text is required')
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -117,7 +117,7 @@ router.post('/', [
     }
 
     const { templateName, templateLanguage, templateCategory, templateComponents } = req.body;
-    const templateService = new WhatsAppTemplateService(req.db, req.tenantId);
+    const templateService = new WhatsAppTemplateService(req.db, req.tenantId!);
     
     // Validate template components structure
     const validation = templateService.validateTemplateComponents(templateComponents);
@@ -177,7 +177,7 @@ router.post('/', [
  */
 router.post('/:templateId/submit', [
   param('templateId').isUUID().withMessage('Valid template ID is required')
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -185,7 +185,7 @@ router.post('/:templateId/submit', [
     }
 
     const { templateId } = req.params;
-    const templateService = new WhatsAppTemplateService(req.db, req.tenantId);
+    const templateService = new WhatsAppTemplateService(req.db, req.tenantId!);
     
     const result = await templateService.submitTemplateForApproval(templateId);
     
@@ -226,7 +226,7 @@ router.put('/:templateId/status', [
     .isIn(['pending', 'approved', 'rejected', 'disabled'])
     .withMessage('Status must be pending, approved, rejected, or disabled'),
   body('rejectionReason').optional().isString()
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -235,7 +235,7 @@ router.put('/:templateId/status', [
 
     const { templateId } = req.params;
     const { status, rejectionReason } = req.body;
-    const templateService = new WhatsAppTemplateService(req.db, req.tenantId);
+    const templateService = new WhatsAppTemplateService(req.db, req.tenantId!);
     
     await templateService.updateTemplateStatus(
       templateId, 
@@ -270,7 +270,7 @@ router.put('/:templateId/status', [
  */
 router.put('/:templateId/deactivate', [
   param('templateId').isUUID().withMessage('Valid template ID is required')
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -278,7 +278,7 @@ router.put('/:templateId/deactivate', [
     }
 
     const { templateId } = req.params;
-    const templateService = new WhatsAppTemplateService(req.db, req.tenantId);
+    const templateService = new WhatsAppTemplateService(req.db, req.tenantId!);
     
     await templateService.deactivateTemplate(templateId);
     
@@ -308,7 +308,7 @@ router.put('/:templateId/deactivate', [
  */
 router.delete('/:templateId', [
   param('templateId').isUUID().withMessage('Valid template ID is required')
-], async (req, res) => {
+], async (req: Request, res: Response) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -316,7 +316,7 @@ router.delete('/:templateId', [
     }
 
     const { templateId } = req.params;
-    const templateService = new WhatsAppTemplateService(req.db, req.tenantId);
+    const templateService = new WhatsAppTemplateService(req.db, req.tenantId!);
     
     // Check if template exists and is not approved (safety check)
     const template = await templateService.getTemplate(templateId);
@@ -360,9 +360,9 @@ router.delete('/:templateId', [
 /**
  * Create default waitlist template
  */
-router.post('/default/waitlist', async (req, res) => {
+router.post('/default/waitlist', async (req: Request, res: Response) => {
   try {
-    const templateService = new WhatsAppTemplateService(req.db, req.tenantId);
+    const templateService = new WhatsAppTemplateService(req.db, req.tenantId!);
     
     // Check if default template already exists
     const existingTemplates = await templateService.getTemplates();

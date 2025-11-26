@@ -76,7 +76,7 @@ export class CalendarService {
    */
   async handleOAuthCallback(code: string, staffId: string): Promise<CalendarSyncResult> {
     try {
-      const { tokens } = await this.oauth2Client.getAccessToken(code);
+      const { tokens } = await this.oauth2Client.getToken(code);
       
       if (!tokens.refresh_token) {
         throw new Error('No refresh token received. User may need to revoke access and re-authorize.');
@@ -97,7 +97,7 @@ export class CalendarService {
         google_refresh_token: tokens.refresh_token,
         calendar_sync_enabled_at: new Date(),
         calendar_sync_status: 'enabled',
-        calendar_sync_error: null
+        calendar_sync_error: undefined
       });
 
       logger.info(`Calendar sync enabled for staff ${staffId}`, {
@@ -178,7 +178,7 @@ export class CalendarService {
       await this.staffRepo.update(eventData.staffId, {
         calendar_last_sync_at: new Date(),
         calendar_sync_status: 'enabled',
-        calendar_sync_error: null
+        calendar_sync_error: undefined
       });
 
       logger.info(`Calendar event created for slot ${eventData.slotId}`, {
@@ -244,7 +244,7 @@ export class CalendarService {
       await this.staffRepo.update(calendarEvent.staff_id, {
         calendar_last_sync_at: new Date(),
         calendar_sync_status: 'enabled',
-        calendar_sync_error: null
+        calendar_sync_error: undefined
       });
 
       logger.info(`Calendar event deleted for slot ${slotId}`, {
@@ -272,11 +272,11 @@ export class CalendarService {
   async disableCalendarSync(staffId: string): Promise<CalendarSyncResult> {
     try {
       await this.staffRepo.update(staffId, {
-        google_calendar_id: null,
-        google_refresh_token: null,
-        calendar_sync_enabled_at: null,
+        google_calendar_id: undefined,
+        google_refresh_token: undefined,
+        calendar_sync_enabled_at: undefined,
         calendar_sync_status: 'disabled',
-        calendar_sync_error: null
+        calendar_sync_error: undefined
       });
 
       logger.info(`Calendar sync disabled for staff ${staffId}`, { staffId });
@@ -335,7 +335,7 @@ export class CalendarService {
       await this.staffRepo.update(staffId, {
         calendar_last_sync_at: new Date(),
         calendar_sync_status: 'enabled',
-        calendar_sync_error: null
+        calendar_sync_error: undefined
       });
 
       return { success: true };

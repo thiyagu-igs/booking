@@ -19,7 +19,10 @@ export interface RegisterData {
 
 export interface TokenPayload {
   userId: string;
+  id: string; // Alias for userId
   tenantId: string;
+  tenant_id: string; // Alias for tenantId
+  user_id: string; // Alias for userId
   email: string;
   role: string;
   iat?: number;
@@ -158,8 +161,15 @@ export class AuthService {
   /**
    * Generate JWT token
    */
-  private generateToken(payload: Omit<TokenPayload, 'iat' | 'exp'>): string {
-    return jwt.sign(payload, this.JWT_SECRET, {
+  private generateToken(payload: Omit<TokenPayload, 'iat' | 'exp' | 'id' | 'tenant_id' | 'user_id'>): string {
+    // Add aliases for compatibility
+    const fullPayload = {
+      ...payload,
+      id: payload.userId,
+      user_id: payload.userId,
+      tenant_id: payload.tenantId
+    };
+    return jwt.sign(fullPayload, this.JWT_SECRET, {
       expiresIn: this.JWT_EXPIRES_IN as any
     });
   }

@@ -9,15 +9,14 @@ import {
   ClockIcon, 
   ExclamationTriangleIcon,
   ArrowDownTrayIcon,
-  CalendarIcon,
-  ChartPieIcon
+  CalendarIcon
 } from '@heroicons/react/24/outline';
 
 type TimePeriod = 'today' | 'week' | 'month' | 'quarter' | 'custom';
 
 export const AnalyticsPage: React.FC = () => {
   const [metrics, setMetrics] = useState<AnalyticsMetrics | null>(null);
-  const [dailyData, setDailyData] = useState<DailyAnalytics[]>([]);
+  const [_dailyData, setDailyData] = useState<DailyAnalytics[]>([]);
   const [potentialNoShows, setPotentialNoShows] = useState<PotentialNoShow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState<TimePeriod>('week');

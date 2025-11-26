@@ -46,15 +46,16 @@ class RequestMonitor {
 
       // Override res.end to capture response metrics
       const originalEnd = res.end;
-      res.end = function(chunk?: any, encoding?: any) {
+      const self = this;
+      res.end = function(this: any, chunk?: any, encoding?: any): any {
         const responseTime = Date.now() - startTime;
         
         // Update metrics
-        this.metrics.responseTime.push(responseTime);
-        this.metrics.activeConnections--;
+        self.metrics.responseTime.push(responseTime);
+        self.metrics.activeConnections--;
         
         if (res.statusCode >= 400) {
-          this.metrics.errorCount++;
+          self.metrics.errorCount++;
         }
 
         // Log response
@@ -68,7 +69,7 @@ class RequestMonitor {
         });
 
         // Send metrics to monitoring service
-        this.monitoringService.recordRequest({
+        self.monitoringService.recordRequest({
           method: req.method,
           url: req.url,
           statusCode: res.statusCode,
@@ -79,8 +80,8 @@ class RequestMonitor {
         });
 
         // Call original end
-        originalEnd.call(this, chunk, encoding);
-      }.bind(this);
+        return originalEnd.call(this, chunk, encoding);
+      };
 
       next();
     };

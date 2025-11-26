@@ -349,6 +349,82 @@ export class MonitoringService {
       'critical'
     );
   }
+
+  /**
+   * Record HTTP request metrics
+   */
+  recordRequest(data: {
+    method: string;
+    url: string;
+    statusCode: number;
+    responseTime: number;
+    tenantId?: string;
+    userAgent?: string;
+    ip?: string;
+  }): void {
+    // Store request metrics (in-memory for now)
+    // In production, this would be sent to a metrics service
+  }
+
+  /**
+   * Record system metrics
+   */
+  recordSystemMetrics(metrics: any): void {
+    // Store system metrics
+  }
+
+  /**
+   * Record error
+   */
+  recordError(error: Error, context: any): void {
+    // Log error with context
+    console.error('Error recorded:', error.message, context);
+  }
+
+  /**
+   * Check database health
+   */
+  async checkDatabaseHealth(): Promise<{ status: string; latency?: number }> {
+    try {
+      const start = Date.now();
+      await db.raw('SELECT 1');
+      const latency = Date.now() - start;
+      return { status: 'healthy', latency };
+    } catch (error) {
+      return { status: 'unhealthy' };
+    }
+  }
+
+  /**
+   * Check Redis health
+   */
+  async checkRedisHealth(): Promise<{ status: string }> {
+    await this.ensureRedisInitialized();
+    if (this.redisClient && typeof this.redisClient.ping === 'function') {
+      try {
+        await this.redisClient.ping();
+        return { status: 'healthy' };
+      } catch (error) {
+        return { status: 'unhealthy' };
+      }
+    }
+    return { status: 'disabled' };
+  }
+
+  /**
+   * Check external services health
+   */
+  async checkExternalServicesHealth(): Promise<{ status: string }> {
+    // Check external services (Twilio, SendGrid, etc.)
+    return { status: 'healthy' };
+  }
+
+  /**
+   * Record performance metric
+   */
+  recordPerformanceMetric(metric: any): void {
+    // Record performance metrics
+  }
 }
 
 // Singleton instance

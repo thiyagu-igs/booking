@@ -16,11 +16,9 @@ import { Card } from './Card';
 import { LoadingSpinner } from './LoadingSpinner';
 import { analyticsService, DailyAnalytics, AnalyticsMetrics } from '../services/analytics';
 import {
-  ChartBarIcon,
   ArrowTrendingUpIcon,
   ClockIcon,
   CurrencyDollarIcon,
-  CalendarDaysIcon,
   UserGroupIcon
 } from '@heroicons/react/24/outline';
 
