@@ -25,7 +25,7 @@
     "test:watch": "jest --watch",
     "test:frontend": "cd frontend && npm test",
     "test:all": "npm test && npm run test:frontend",
-    "lint": "eslint .The job failed because the workflow attempted to run npm",
+    "lint": "eslint.",
     "test:security": "jest --testPathPattern=security",
     "test:e2e": "jest --testPathPattern=e2e --runInBand",
     "test:integration": "jest --testPathPattern=integration --runInBand",

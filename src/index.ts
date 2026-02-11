@@ -22,6 +22,7 @@ import webhookRoutes from './routes/webhooks';
 import whatsappTemplateRoutes from './routes/whatsapp-templates';
 import publicRoutes from './routes/public';
 import pushRoutes from './routes/push';
+import bookingsRoutes from './routes/bookings';
 
 // Security middleware
 import { 
@@ -117,6 +118,7 @@ app.use('/api/webhooks', webhookRoutes);
 app.use('/api/whatsapp-templates', whatsappTemplateRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/push', pushRoutes);
+app.use('/api/bookings', bookingsRoutes);
 
 // Serve static files from frontend build in production
 if (process.env.NODE_ENV === 'production') {

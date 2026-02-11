@@ -11,12 +11,14 @@ import {
   ChartBarIcon,
   SunIcon,
   MoonIcon,
+  CalendarDaysIcon,
 } from '@heroicons/react/24/outline'
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
+  { name: 'Bookings', href: '/bookings', icon: CalendarDaysIcon },
   { name: 'Waitlist', href: '/waitlist', icon: UsersIcon },
   { name: 'Analytics', href: '/analytics', icon: ChartBarIcon },
   { name: 'Messages', href: '/messages', icon: ChatBubbleLeftRightIcon },
